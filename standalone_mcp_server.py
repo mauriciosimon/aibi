@@ -21,6 +21,7 @@ Run:
 import os
 import json
 import logging
+import ssl
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
 import odoorpc
@@ -52,18 +53,22 @@ odoo_connection = None
 def get_odoo_connection():
     """Get or create Odoo connection"""
     global odoo_connection
-    
+
     if odoo_connection is None:
         try:
             logger.info(f"Connecting to Odoo at {ODOO_HOST}...")
+            # Disable SSL verification for Odoo Cloud
+            ssl._create_default_https_context = ssl._create_unverified_context
             odoo = odoorpc.ODOO(ODOO_HOST, protocol=ODOO_PROTOCOL, port=ODOO_PORT)
+            odoo.config['timeout'] = 300  # 5 minutes timeout
+            logger.info(f"Logging in to database {ODOO_DATABASE} with user {ODOO_USERNAME}...")
             odoo.login(ODOO_DATABASE, ODOO_USERNAME, ODOO_PASSWORD)
             odoo_connection = odoo
-            logger.info("Successfully connected to Odoo!")
+            logger.info(f"Successfully connected to Odoo! User ID: {odoo.env.uid}")
         except Exception as e:
             logger.error(f"Failed to connect to Odoo: {str(e)}")
             raise
-    
+
     return odoo_connection
 
 
