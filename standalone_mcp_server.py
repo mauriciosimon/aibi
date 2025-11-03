@@ -24,6 +24,7 @@ import logging
 import ssl
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import odoorpc
 from dotenv import load_dotenv
 
@@ -36,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 # Flask app
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Configuration
 ODOO_HOST = os.getenv('ODOO_HOST', 'yourcompany.odoo.com')
