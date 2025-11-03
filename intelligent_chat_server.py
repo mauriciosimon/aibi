@@ -25,8 +25,15 @@ CLAUDE_API_KEY = os.getenv('ANTHROPIC_API_KEY', 'your-claude-api-key-here')
 MCP_SERVER_URL = os.getenv('MCP_SERVER_URL', 'https://mcp-odoo-production.up.railway.app')
 MCP_API_KEY = os.getenv('MCP_API_KEY', 'odoo-mcp-2025')
 
-# Initialize Anthropic client
-client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
+# Anthropic client (initialized on first use)
+_client = None
+
+def get_anthropic_client():
+    """Get or create Anthropic client"""
+    global _client
+    if _client is None:
+        _client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
+    return _client
 
 # MCP Tools definition for Claude
 MCP_TOOLS = [
@@ -179,6 +186,9 @@ def chat():
                 "content": user_message
             }
         ]
+
+        # Get Anthropic client
+        client = get_anthropic_client()
 
         # Initial call to Claude with tools
         response = client.messages.create(
