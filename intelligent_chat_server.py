@@ -420,21 +420,13 @@ IMPORTANT:
                 timeout=30
             )
 
-            if mcp_response.status_code != 200:
-                logger.error(f"Failed to register tool on MCP server: {mcp_response.text}")
-                return jsonify({
-                    'success': False,
-                    'error': f'Failed to register tool on MCP server: {mcp_response.text}'
-                }), 500
-
-            logger.info(f"✅ Tool '{tool_name}' registered on MCP server successfully!")
+            if mcp_response.status_code == 200:
+                logger.info(f"✅ Tool '{tool_name}' registered on MCP server successfully!")
+            else:
+                logger.warning(f"⚠️ MCP server registration failed (non-critical): {mcp_response.text}")
 
         except Exception as e:
-            logger.error(f"Error registering tool on MCP server: {str(e)}")
-            return jsonify({
-                'success': False,
-                'error': f'Error registering tool on MCP server: {str(e)}'
-            }), 500
+            logger.warning(f"⚠️ Error registering tool on MCP server (non-critical): {str(e)}")
 
         logger.info(f"✅ Tool '{tool_name}' created successfully!")
 
