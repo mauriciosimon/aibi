@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Intelligent Odoo AI Assistant</title>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -32,10 +34,37 @@
             overflow: hidden;
         }
 
+        /* Navigation */
+        .nav-menu {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .nav-menu a.active {
+            background: rgba(255,255,255,0.3);
+        }
+
         .chat-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 25px;
+            padding: 20px 25px;
             text-align: center;
         }
 
@@ -267,20 +296,375 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .modal-content textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .modal-content input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .modal-content button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .modal-content button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .modal-content button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #9CA3AF;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        #developResult {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #developResult.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        #developResult.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Reports Page Styles */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .reports-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .report-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .report-card h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 18px;
+            padding-right: 40px;
+        }
+
+        .report-card p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .report-card .report-meta {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .report-card .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+            z-index: 10;
+        }
+
+        .report-card .delete-btn:hover {
+            background: #ff5252;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Report Detail View */
+        .report-detail {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .report-detail.active {
+            display: flex;
+        }
+
+        .report-detail-header {
+            background: white;
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .report-detail-header .back-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .report-detail-header .back-btn:hover {
+            background: #5568d3;
+        }
+
+        .report-detail-info h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .report-detail-info p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Professional Table Styling */
+        .data-table, .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .data-table thead, .report-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .data-table th, .report-table th {
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table td, .report-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .data-table tbody tr:hover, .report-table tbody tr:hover {
+            background: #f8f9fa;
+            transition: background 0.2s;
+        }
+
+        .data-table tbody tr:last-child td, .report-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Alternating row colors */
+        .data-table tbody tr:nth-child(even), .report-table tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        /* Chart Container Styling */
+        .chart-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chart-canvas {
+            max-height: 400px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        /* Report Section Styling */
+        .report-section {
+            margin: 25px 0;
+        }
+
+        .report-section h3 {
+            color: #667eea;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .report-section h4 {
+            color: #555;
+            font-size: 16px;
+            margin: 15px 0 10px 0;
+        }
+
+        /* Number highlighting */
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
-        <div class="chat-header" style="position: relative;">
-            <div class="connection-status">
-                <span class="status-dot"></span>
-                AI Connected
-            </div>
-            <h1>
-                🤖 Intelligent Odoo Assistant
-                <span class="ai-badge">Powered by Claude</span>
-            </h1>
-            <p>Ask me anything about your business - I'll understand and help!</p>
+        <!-- Navigation Menu -->
+        <div class="nav-menu">
+            <a href="#" class="nav-link active" data-page="home">🏠 Home</a>
+            <a href="#" class="nav-link" data-page="reports">📊 Reports</a>
+        </div>
+
+        <!-- Home Page (Chat Interface) -->
+        <div id="homePage" class="page active">
+            <div class="chat-header" style="position: relative;">
+                <div class="connection-status">
+                    <span class="status-dot"></span>
+                    AI Connected
+                </div>
+                <h1>
+                    🤖 Intelligent Odoo Assistant
+                    <span class="ai-badge">Powered by Claude</span>
+                </h1>
+                <p>Ask me anything about your business - I'll understand and help!</p>
         </div>
 
         <div class="quick-actions">
@@ -289,6 +673,20 @@
             <button class="quick-action-btn" onclick="quickQuery('What were my sales in October 2025?')">October Sales</button>
             <button class="quick-action-btn" onclick="quickQuery('Analyze my expenses for July 2025')">July Expenses</button>
             <button class="quick-action-btn" onclick="quickQuery('Show revenue trends for the last 6 months')">Revenue Trends</button>
+            <button class="quick-action-btn" onclick="showDevelopModal()" style="background: #ff6b6b; color: white; border-color: #ff6b6b;">🔧 Build Report</button>
+        </div>
+
+        <!-- Developer Modal -->
+        <div id="developModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeDevelopModal()">&times;</span>
+                <h2>🔧 Report Builder</h2>
+                <p>Describe what report or analysis you need, and AI will generate it for you!</p>
+                <textarea id="developRequest" placeholder="Example: Create a report showing sales by salesperson for a given month"></textarea>
+                <input type="password" id="adminPassword" placeholder="Admin Password">
+                <button onclick="submitDevelopRequest()" id="developBtn">Generate Report</button>
+                <div id="developResult"></div>
+            </div>
         </div>
 
         <div class="chat-messages" id="chatMessages">
@@ -310,6 +708,57 @@
                 <button id="sendButton" onclick="sendMessage()">Send</button>
             </div>
         </div>
+        </div>
+
+        <!-- Reports Page -->
+        <div id="reportsPage" class="page">
+            <!-- Reports List View -->
+            <div id="reportsList" class="reports-list">
+                <div class="chat-header">
+                    <h1>📊 Custom Reports</h1>
+                    <p>Your AI-generated reports and analytics</p>
+                </div>
+                <div class="reports-container" id="reportsContainer">
+                    <div class="empty-state">
+                        <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
+                        <h3>No reports yet</h3>
+                        <p>Go to Home and use the "Build Report" button to create your first custom report</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Detail View -->
+            <div id="reportDetail" class="report-detail">
+                <div class="report-detail-header">
+                    <button class="back-btn" onclick="backToReportsList()">← Back</button>
+                    <div class="report-detail-info">
+                        <h2 id="reportDetailTitle">Report Title</h2>
+                        <p id="reportDetailDescription">Report description</p>
+                    </div>
+                    <button class="back-btn" style="background: #ff6b6b; margin-left: auto;" onclick="deleteCurrentReport()">🗑️ Delete Report</button>
+                </div>
+
+                <div class="chat-messages" id="reportChatMessages">
+                    <div class="message system">
+                        <div class="message-content">
+                            👋 This is your report workspace. You can refine and enhance this report by chatting with me here!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <input
+                            type="text"
+                            id="reportInput"
+                            placeholder="Ask questions or request enhancements to this report..."
+                            onkeypress="handleReportKeyPress(event)"
+                        >
+                        <button id="reportSendButton" onclick="sendReportMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -319,18 +768,119 @@
         // Conversation history
         let conversationHistory = [];
 
+        // Chart rendering utilities
+        let chartInstances = {};  // Store chart instances for cleanup
+
+        /**
+         * Render a chart from JSON data
+         * @param {Object} chartData - Chart configuration object
+         * @param {string} containerId - ID of the container element
+         */
+        function renderChart(chartData, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error(`Container ${containerId} not found`);
+                return;
+            }
+
+            // Create canvas element
+            const canvas = document.createElement('canvas');
+            canvas.className = 'chart-canvas';
+            const chartId = 'chart_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            canvas.id = chartId;
+
+            // Clear container and add canvas
+            container.innerHTML = '';
+            if (chartData.title) {
+                const title = document.createElement('div');
+                title.className = 'chart-title';
+                title.textContent = chartData.title;
+                container.appendChild(title);
+            }
+            container.appendChild(canvas);
+
+            // Destroy existing chart if any
+            if (chartInstances[containerId]) {
+                chartInstances[containerId].destroy();
+            }
+
+            // Create new chart
+            const ctx = canvas.getContext('2d');
+            chartInstances[containerId] = new Chart(ctx, {
+                type: chartData.type || 'bar',
+                data: chartData.data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: chartData.showLegend !== false,
+                            position: 'top',
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: chartData.type !== 'pie' && chartData.type !== 'doughnut' ? {
+                        y: {
+                            beginAtZero: true
+                        }
+                    } : {}
+                }
+            });
+        }
+
+        /**
+         * Process message content to render embedded charts
+         * Looks for special chart syntax: [CHART:chartId]{...json...}
+         */
+        function processChartEmbeds(content) {
+            const chartPattern = /\[CHART:(\w+)\]\s*(\{[\s\S]*?\})/g;
+            let match;
+            const charts = [];
+
+            while ((match = chartPattern.exec(content)) !== null) {
+                const chartId = match[1];
+                try {
+                    const chartData = JSON.parse(match[2]);
+                    charts.push({ id: chartId, data: chartData, fullMatch: match[0] });
+                } catch (e) {
+                    console.error('Failed to parse chart data:', e);
+                }
+            }
+
+            // Replace chart syntax with div containers
+            let processedContent = content;
+            charts.forEach(chart => {
+                const containerHtml = `<div class="chart-container" id="chart-container-${chart.id}"></div>`;
+                processedContent = processedContent.replace(chart.fullMatch, containerHtml);
+            });
+
+            return { content: processedContent, charts };
+        }
+
         function addMessage(content, type = 'assistant') {
             const messagesDiv = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
 
+            // Process content for chart embeds
+            const { content: processedContent, charts } = processChartEmbeds(content);
+
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
-            contentDiv.innerHTML = content;
+            contentDiv.innerHTML = processedContent;
 
             messageDiv.appendChild(contentDiv);
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Render any embedded charts after DOM is updated
+            setTimeout(() => {
+                charts.forEach(chart => {
+                    renderChart(chart.data, `chart-container-${chart.id}`);
+                });
+            }, 100);
         }
 
         function showTyping() {
@@ -435,6 +985,389 @@
 
         // Focus input on load
         document.getElementById('userInput').focus();
+
+        // Developer Modal Functions
+        function showDevelopModal() {
+            document.getElementById('developModal').style.display = 'block';
+        }
+
+        function closeDevelopModal() {
+            document.getElementById('developModal').style.display = 'none';
+            document.getElementById('developResult').className = '';
+            document.getElementById('developResult').style.display = 'none';
+        }
+
+        async function submitDevelopRequest() {
+            const request = document.getElementById('developRequest').value;
+            const password = document.getElementById('adminPassword').value;
+            const resultDiv = document.getElementById('developResult');
+            const btn = document.getElementById('developBtn');
+
+            if (!request || !password) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = '❌ Please fill in both fields';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            resultDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/develop`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        request: request,
+                        admin_password: password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        ✅ <strong>Report Created Successfully!</strong><br><br>
+                        <strong>Tool Name:</strong> ${result.tool_name}<br>
+                        <strong>Description:</strong> ${result.tool_definition.description}<br><br>
+                        The new report is now available! You can use it by asking questions in the chat.
+                    `;
+
+                    // Save report to localStorage
+                    const newReport = {
+                        id: result.tool_name,
+                        name: result.tool_name,
+                        description: result.tool_definition.description,
+                        created: new Date().toISOString(),
+                        tool_definition: result.tool_definition
+                    };
+                    saveReport(newReport);
+
+                    // Clear form
+                    document.getElementById('developRequest').value = '';
+                    document.getElementById('adminPassword').value = '';
+
+                    // Auto-navigate to the new report
+                    setTimeout(() => {
+                        closeDevelopModal();
+                        switchPage('reports');
+                        // Wait for page to load then open the report
+                        setTimeout(() => {
+                            openReportAndExecute(result.tool_name);
+                        }, 500);
+                    }, 2000);
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `❌ <strong>Error:</strong> ${result.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `❌ <strong>Connection Error:</strong> ${error.message}`;
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Generate Report';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('developModal');
+            if (event.target == modal) {
+                closeDevelopModal();
+            }
+        }
+
+        // ===== NAVIGATION & REPORTS MANAGEMENT =====
+
+        // Current report being viewed
+        let currentReport = null;
+        let reportConversationHistory = [];
+
+        // Navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.getAttribute('data-page');
+                switchPage(page);
+            });
+        });
+
+        function switchPage(page) {
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-page') === page) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Update pages
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+            });
+
+            if (page === 'home') {
+                document.getElementById('homePage').classList.add('active');
+            } else if (page === 'reports') {
+                document.getElementById('reportsPage').classList.add('active');
+                loadReports();
+            }
+        }
+
+        // Report Management
+        function saveReport(report) {
+            let reports = JSON.parse(localStorage.getItem('reports') || '[]');
+
+            // Check if report already exists
+            const existingIndex = reports.findIndex(r => r.id === report.id);
+            if (existingIndex >= 0) {
+                reports[existingIndex] = report;
+            } else {
+                reports.push(report);
+            }
+
+            localStorage.setItem('reports', JSON.stringify(reports));
+        }
+
+        function getReports() {
+            return JSON.parse(localStorage.getItem('reports') || '[]');
+        }
+
+        function loadReports() {
+            const reports = getReports();
+            const container = document.getElementById('reportsContainer');
+
+            if (reports.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
+                        <h3>No reports yet</h3>
+                        <p>Go to Home and use the "Build Report" button to create your first custom report</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = reports.map(report => `
+                    <div class="report-card" onclick="openReport('${report.id}')">
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteReport('${report.id}')">🗑️ Delete</button>
+                        <h3>${report.name}</h3>
+                        <p>${report.description}</p>
+                        <div class="report-meta">
+                            Created: ${new Date(report.created).toLocaleDateString()} at ${new Date(report.created).toLocaleTimeString()}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function openReport(reportId) {
+            const reports = getReports();
+            currentReport = reports.find(r => r.id === reportId);
+
+            if (!currentReport) return;
+
+            // Update report detail view
+            document.getElementById('reportDetailTitle').textContent = currentReport.name;
+            document.getElementById('reportDetailDescription').textContent = currentReport.description;
+
+            // Hide reports list, show report detail
+            document.getElementById('reportsList').style.display = 'none';
+            document.getElementById('reportDetail').classList.add('active');
+
+            // Clear chat messages
+            const chatMessages = document.getElementById('reportChatMessages');
+            chatMessages.innerHTML = `
+                <div class="message system">
+                    <div class="message-content">
+                        👋 This is your report workspace for <strong>${currentReport.name}</strong>.
+                        You can refine and enhance this report by chatting with me here!
+                    </div>
+                </div>
+            `;
+
+            // Reset conversation history
+            reportConversationHistory = [];
+        }
+
+        async function openReportAndExecute(reportId) {
+            // First open the report normally
+            openReport(reportId);
+
+            // Then automatically execute it to show data
+            showReportTyping();
+
+            const initialMessage = `Run the ${currentReport.name} report and show me the results`;
+            reportConversationHistory.push({
+                role: 'user',
+                content: initialMessage
+            });
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/chat`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        message: initialMessage,
+                        conversation_history: reportConversationHistory
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Report execution response:', data);
+                removeReportTyping();
+
+                // Backend returns 'message' not 'response'
+                const message = data.message || data.response;
+                if (message) {
+                    addReportMessage(message, 'assistant');
+                    reportConversationHistory.push({
+                        role: 'assistant',
+                        content: message
+                    });
+                } else {
+                    const errorMsg = data.error || JSON.stringify(data) || 'Unknown error';
+                    console.error('Report execution error:', errorMsg);
+                    addReportMessage('❌ Error: ' + errorMsg, 'assistant');
+                }
+            } catch (error) {
+                console.error('Report execution network error:', error);
+                removeReportTyping();
+                addReportMessage('❌ Network error: ' + error.message, 'assistant');
+            }
+        }
+
+        function backToReportsList() {
+            document.getElementById('reportDetail').classList.remove('active');
+            document.getElementById('reportsList').style.display = 'block';
+            currentReport = null;
+        }
+
+        function deleteReport(reportId) {
+            // Confirm deletion
+            if (!confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+                return;
+            }
+
+            // Get reports and filter out the deleted one
+            let reports = getReports();
+            reports = reports.filter(r => r.id !== reportId);
+            localStorage.setItem('reports', JSON.stringify(reports));
+
+            // If currently viewing this report, go back to list
+            if (currentReport && currentReport.id === reportId) {
+                backToReportsList();
+            }
+
+            // Reload reports list
+            loadReports();
+        }
+
+        function deleteCurrentReport() {
+            if (currentReport) {
+                deleteReport(currentReport.id);
+            }
+        }
+
+        function handleReportKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendReportMessage();
+            }
+        }
+
+        async function sendReportMessage() {
+            const input = document.getElementById('reportInput');
+            const message = input.value.trim();
+
+            if (!message || !currentReport) return;
+
+            // Add user message
+            addReportMessage(message, 'user');
+            input.value = '';
+
+            // Show typing indicator
+            showReportTyping();
+
+            // Add to conversation history with report context
+            const contextMessage = `I'm working on the report "${currentReport.name}". ${message}`;
+            reportConversationHistory.push({
+                role: 'user',
+                content: contextMessage
+            });
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/chat`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        message: contextMessage,
+                        conversation_history: reportConversationHistory
+                    })
+                });
+
+                const data = await response.json();
+                removeReportTyping();
+
+                // Backend returns 'message' not 'response'
+                const message = data.message || data.response;
+                if (message) {
+                    addReportMessage(message, 'assistant');
+                    reportConversationHistory.push({
+                        role: 'assistant',
+                        content: message
+                    });
+                } else {
+                    addReportMessage('❌ Error: ' + (data.error || 'Unknown error'), 'assistant');
+                }
+            } catch (error) {
+                removeReportTyping();
+                addReportMessage('❌ Network error: ' + error.message, 'assistant');
+            }
+        }
+
+        function addReportMessage(content, type = 'assistant') {
+            const messagesDiv = document.getElementById('reportChatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            // Process content for chart embeds
+            const { content: processedContent, charts } = processChartEmbeds(content);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = processedContent;
+
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Render any embedded charts after DOM is updated
+            setTimeout(() => {
+                charts.forEach(chart => {
+                    renderChart(chart.data, `chart-container-${chart.id}`);
+                });
+            }, 100);
+        }
+
+        function showReportTyping() {
+            const messagesDiv = document.getElementById('reportChatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'reportTypingIndicator';
+            typingDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function removeReportTyping() {
+            const typing = document.getElementById('reportTypingIndicator');
+            if (typing) typing.remove();
+        }
     </script>
 </body>
 </html>

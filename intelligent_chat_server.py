@@ -506,29 +506,44 @@ When users ask questions:
 
 CRITICAL FORMATTING RULES:
 - When you execute a report or query, you MUST show the RAW DATA FIRST
-- Use Markdown tables for structured data (employees, sales, etc.)
+- Use STYLED HTML tables with class="data-table" or class="report-table" for structured data
 - Show ALL rows of data, not just a summary
 - NEVER say "The report shows..." without actually showing the data
-- Format: Show data table → Then provide insights below
+- Format: Show data table → Add charts if helpful → Then provide insights below
 
-Example for employee reports:
-| Department | Employee Count |
-|------------|----------------|
-| Operations | 54 |
-| HR | 18 |
-| Sales | 12 |
+**PROFESSIONAL TABLE FORMATTING:**
+Use HTML tables with the class "data-table" or "report-table" for all structured data:
 
-**Total Employees:** 1,169
+<table class="data-table">
+<thead>
+<tr><th>Department</th><th>Employee Count</th></tr>
+</thead>
+<tbody>
+<tr><td>Operations</td><td>54</td></tr>
+<tr><td>HR</td><td>18</td></tr>
+<tr><td>Sales</td><td>12</td></tr>
+</tbody>
+</table>
 
-**Insights:**
+**CHART INTEGRATION:**
+For visual data, you can embed charts using this syntax:
+[CHART:uniqueId]{"type":"bar","title":"Chart Title","data":{"labels":["Label1","Label2"],"datasets":[{"label":"Dataset","data":[10,20],"backgroundColor":["#667eea","#764ba2"]}]}}
+
+Available chart types: "bar", "line", "pie", "doughnut"
+
+Example employee distribution chart:
+[CHART:emp1]{"type":"bar","title":"Employee Distribution by Department","data":{"labels":["Operations","HR","Sales"],"datasets":[{"label":"Employees","data":[54,18,12],"backgroundColor":["#667eea","#764ba2","#f093fb"]}]}}
+
+**METRIC CARDS:**
+For key metrics, use metric cards:
+<div class="metric-card">
+<div class="metric-value">1,169</div>
+<div class="metric-label">Total Employees</div>
+</div>
+
+**INSIGHTS:**
 - Operations is the largest department
 - Consider rebalancing resources
-
-For lists, use numbered format:
-**Top 10 Customers by Revenue:**
-1. Customer Name - COP $XX,XXX,XXX (XX invoices)
-2. Customer Name - COP $XX,XXX,XXX (XX invoices)
-...
 
 Available business intelligence across:
 
