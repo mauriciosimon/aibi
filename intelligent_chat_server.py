@@ -490,7 +490,7 @@ def chat():
         logger.info(f"Tools count: {len(all_tools)}")
 
         response = client.messages.create(
-            model="claude-3-haiku-20240307",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=8192,
             tools=all_tools,
             messages=messages,
@@ -615,7 +615,7 @@ For HR and workforce questions, intelligently identify patterns and trends."""
             # Get Claude's response after tool use
             logger.info("Making follow-up call to Claude API...")
             response = client.messages.create(
-                model="claude-3-haiku-20240307",
+                model="claude-sonnet-4-5-20250929",
                 max_tokens=8192,
                 tools=all_tools,
                 messages=messages
