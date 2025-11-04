@@ -649,8 +649,8 @@
     <div class="chat-container">
         <!-- Navigation Menu -->
         <div class="nav-menu">
-            <a href="#" class="nav-link active" data-page="home">🏠 Home</a>
-            <a href="#" class="nav-link" data-page="reports">📊 Reports</a>
+            <a href="#" class="nav-link active" data-page="home">📊 Report Builder</a>
+            <a href="#" class="nav-link" data-page="reports">💾 Saved Reports</a>
         </div>
 
         <!-- Home Page (Chat Interface) -->
@@ -661,31 +661,30 @@
                     AI Connected
                 </div>
                 <h1>
-                    🤖 Intelligent Odoo Assistant
+                    📊 Report Builder
                     <span class="ai-badge">Powered by Claude</span>
                 </h1>
-                <p>Ask me anything about your business - I'll understand and help!</p>
+                <p>Build custom reports with data, charts, and tables - then save them!</p>
         </div>
 
         <div class="quick-actions">
-            <span class="quick-actions-label">Try asking:</span>
+            <span class="quick-actions-label">Quick examples:</span>
             <button class="quick-action-btn" onclick="quickQuery('Show me my top 10 customers')">Top Customers</button>
             <button class="quick-action-btn" onclick="quickQuery('What were my sales in October 2025?')">October Sales</button>
-            <button class="quick-action-btn" onclick="quickQuery('Analyze my expenses for July 2025')">July Expenses</button>
-            <button class="quick-action-btn" onclick="quickQuery('Show revenue trends for the last 6 months')">Revenue Trends</button>
-            <button class="quick-action-btn" onclick="showDevelopModal()" style="background: #ff6b6b; color: white; border-color: #ff6b6b;">🔧 Build Report</button>
+            <button class="quick-action-btn" onclick="quickQuery('Create a pivot table with employees by department')">Employee Pivot</button>
+            <button class="quick-action-btn" onclick="quickQuery('Show revenue trends for the last 6 months with a chart')">Revenue Chart</button>
         </div>
 
-        <!-- Developer Modal -->
-        <div id="developModal" class="modal">
+        <!-- Save Report Modal -->
+        <div id="saveReportModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeDevelopModal()">&times;</span>
-                <h2>🔧 Report Builder</h2>
-                <p>Describe what report or analysis you need, and AI will generate it for you!</p>
-                <textarea id="developRequest" placeholder="Example: Create a report showing sales by salesperson for a given month"></textarea>
-                <input type="password" id="adminPassword" placeholder="Admin Password">
-                <button onclick="submitDevelopRequest()" id="developBtn">Generate Report</button>
-                <div id="developResult"></div>
+                <span class="close" onclick="closeSaveReportModal()">&times;</span>
+                <h2>💾 Save Current Report</h2>
+                <p>Give your report a name and description so you can find it later</p>
+                <input type="text" id="reportName" placeholder="Report Name (e.g., 'Q4 Sales Overview')" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #e9ecef; border-radius: 10px; font-size: 14px;">
+                <textarea id="reportDescription" placeholder="Brief description of what this report shows..." style="min-height: 80px;"></textarea>
+                <button onclick="saveCurrentReport()" id="saveBtn">💾 Save Report</button>
+                <div id="saveResult"></div>
             </div>
         </div>
 
@@ -706,6 +705,7 @@
                     onkeypress="handleKeyPress(event)"
                 >
                 <button id="sendButton" onclick="sendMessage()">Send</button>
+                <button id="saveReportButton" onclick="showSaveReportModal()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">💾 Save Report</button>
             </div>
         </div>
         </div>
@@ -715,14 +715,14 @@
             <!-- Reports List View -->
             <div id="reportsList" class="reports-list">
                 <div class="chat-header">
-                    <h1>📊 Custom Reports</h1>
-                    <p>Your AI-generated reports and analytics</p>
+                    <h1>💾 Saved Reports</h1>
+                    <p>Access your saved reports and view them anytime</p>
                 </div>
                 <div class="reports-container" id="reportsContainer">
                     <div class="empty-state">
                         <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
-                        <h3>No reports yet</h3>
-                        <p>Go to Home and use the "Build Report" button to create your first custom report</p>
+                        <h3>No saved reports yet</h3>
+                        <p>Go to Report Builder and create a report, then click "Save Report" to save it here</p>
                     </div>
                 </div>
             </div>
@@ -1072,10 +1072,76 @@
 
         // Close modal when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('developModal');
-            if (event.target == modal) {
+            const developModal = document.getElementById('developModal');
+            const saveModal = document.getElementById('saveReportModal');
+            if (event.target == developModal) {
                 closeDevelopModal();
             }
+            if (event.target == saveModal) {
+                closeSaveReportModal();
+            }
+        }
+
+        // Save Report Modal Functions
+        function showSaveReportModal() {
+            // Check if there are any messages in the conversation
+            if (conversationHistory.length === 0) {
+                alert('Please create a report first before saving!');
+                return;
+            }
+            document.getElementById('saveReportModal').style.display = 'block';
+        }
+
+        function closeSaveReportModal() {
+            document.getElementById('saveReportModal').style.display = 'none';
+            document.getElementById('saveResult').className = '';
+            document.getElementById('saveResult').style.display = 'none';
+        }
+
+        function saveCurrentReport() {
+            const name = document.getElementById('reportName').value.trim();
+            const description = document.getElementById('reportDescription').value.trim();
+            const resultDiv = document.getElementById('saveResult');
+            const btn = document.getElementById('saveBtn');
+
+            if (!name) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = '❌ Please provide a report name';
+                resultDiv.style.display = 'block';
+                return;
+            }
+
+            // Get the current chat messages HTML
+            const chatMessages = document.getElementById('chatMessages').innerHTML;
+
+            // Create report object
+            const report = {
+                id: 'report_' + Date.now(),
+                name: name,
+                description: description || 'No description provided',
+                created: new Date().toISOString(),
+                conversationHistory: conversationHistory,
+                messagesHtml: chatMessages
+            };
+
+            // Save to localStorage
+            saveReport(report);
+
+            // Show success message
+            resultDiv.className = 'success';
+            resultDiv.innerHTML = '✅ Report saved successfully!';
+            resultDiv.style.display = 'block';
+
+            // Clear form
+            document.getElementById('reportName').value = '';
+            document.getElementById('reportDescription').value = '';
+
+            // Close modal after 1.5 seconds
+            setTimeout(() => {
+                closeSaveReportModal();
+            }, 1500);
+
+            btn.disabled = false;
         }
 
         // ===== NAVIGATION & REPORTS MANAGEMENT =====
@@ -1174,19 +1240,33 @@
             document.getElementById('reportsList').style.display = 'none';
             document.getElementById('reportDetail').classList.add('active');
 
-            // Clear chat messages
+            // Load the saved report messages HTML
             const chatMessages = document.getElementById('reportChatMessages');
-            chatMessages.innerHTML = `
-                <div class="message system">
-                    <div class="message-content">
-                        👋 This is your report workspace for <strong>${currentReport.name}</strong>.
-                        You can refine and enhance this report by chatting with me here!
+            if (currentReport.messagesHtml) {
+                chatMessages.innerHTML = currentReport.messagesHtml;
+            } else {
+                // Fallback for old reports without messagesHtml
+                chatMessages.innerHTML = `
+                    <div class="message system">
+                        <div class="message-content">
+                            👋 Viewing saved report: <strong>${currentReport.name}</strong>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
 
-            // Reset conversation history
-            reportConversationHistory = [];
+            // Restore conversation history
+            reportConversationHistory = currentReport.conversationHistory || [];
+
+            // Re-render any charts in the saved report
+            setTimeout(() => {
+                const chartContainers = chatMessages.querySelectorAll('[id^="chart-container-"]');
+                chartContainers.forEach(container => {
+                    // Chart rendering is already in the HTML, just ensure Chart.js processes them
+                    const chartId = container.id.replace('chart-container-', '');
+                    // Charts should already be rendered from the saved HTML
+                });
+            }, 100);
         }
 
         async function openReportAndExecute(reportId) {
