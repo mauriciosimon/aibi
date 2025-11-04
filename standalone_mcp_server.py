@@ -27,6 +27,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import odoorpc
 from dotenv import load_dotenv
+import dynamic_tools
 
 # Load environment variables
 load_dotenv()
@@ -98,14 +99,76 @@ def health_check():
         odoo_status = "connected"
     except:
         odoo_status = "disconnected"
-    
+
+    dynamic_count = len(dynamic_tools.DYNAMIC_FUNCTIONS)
+
     return jsonify({
         'status': 'healthy',
         'service': 'Claro Distribution MCP Server (Standalone)',
         'version': '2.0',
         'odoo_status': odoo_status,
+        'dynamic_tools_count': dynamic_count,
         'timestamp': datetime.now().isoformat()
     })
+
+
+@app.route('/mcp/reload', methods=['POST'])
+def reload_tools():
+    """Reload dynamic tools from disk"""
+    try:
+        data = request.get_json()
+        if not authenticate(data.get('api_key')):
+            return build_response(False, error='Invalid API key'), 401
+
+        # Reload dynamic tools
+        dynamic_tools.load_persisted_tools()
+
+        return build_response(True, {
+            'message': 'Dynamic tools reloaded successfully',
+            'dynamic_tools_count': len(dynamic_tools.DYNAMIC_FUNCTIONS)
+        })
+    except Exception as e:
+        logger.error(f"Error in reload_tools: {str(e)}")
+        return build_response(False, error=str(e)), 500
+
+
+@app.route('/mcp/register-tool', methods=['POST'])
+def register_tool():
+    """Register a new dynamic tool"""
+    try:
+        data = request.get_json()
+        if not authenticate(data.get('api_key')):
+            return build_response(False, error='Invalid API key'), 401
+
+        tool_definition = data.get('tool_definition')
+        function_code = data.get('function_code')
+
+        if not tool_definition or not function_code:
+            return build_response(False, error='Missing tool_definition or function_code'), 400
+
+        tool_name = tool_definition['name']
+
+        # Register the tool in memory
+        dynamic_tools.register_dynamic_tool(tool_definition, function_code)
+
+        # Save to file for persistence
+        file_path = dynamic_tools.save_dynamic_tool_to_file(
+            tool_name,
+            tool_definition,
+            function_code
+        )
+
+        logger.info(f"✅ Tool '{tool_name}' registered successfully on MCP server!")
+
+        return build_response(True, {
+            'message': f"Tool '{tool_name}' registered successfully",
+            'tool_name': tool_name,
+            'file_path': file_path,
+            'dynamic_tools_count': len(dynamic_tools.DYNAMIC_FUNCTIONS)
+        })
+    except Exception as e:
+        logger.error(f"Error in register_tool: {str(e)}")
+        return build_response(False, error=str(e)), 500
 
 
 @app.route('/mcp/resources', methods=['POST'])
@@ -165,6 +228,7 @@ def list_tools():
             return build_response(False, error='Invalid API key'), 401
 
         tools = [
+            # Financial & Sales
             {
                 'name': 'get_sales_summary',
                 'description': 'Get sales summary by product/service',
@@ -207,8 +271,131 @@ def list_tools():
                         'end_date': {'type': 'string'}
                     }
                 }
+            },
+            # HR & Workforce
+            {
+                'name': 'get_employee_metrics',
+                'description': 'Get employee headcount, department distribution, and workforce analytics',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'group_by': {'type': 'string', 'description': 'Group by: department, job, contract_type'}
+                    }
+                }
+            },
+            {
+                'name': 'get_attendance_analysis',
+                'description': 'Analyze employee attendance patterns and work hours',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'start_date': {'type': 'string'},
+                        'end_date': {'type': 'string'},
+                        'employee_id': {'type': 'integer', 'description': 'Optional: specific employee'}
+                    }
+                }
+            },
+            {
+                'name': 'get_timesheet_summary',
+                'description': 'Get timesheet data by project, employee, or task',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'start_date': {'type': 'string'},
+                        'end_date': {'type': 'string'},
+                        'group_by': {'type': 'string', 'description': 'Group by: employee, project, task'}
+                    }
+                }
+            },
+            {
+                'name': 'get_recruitment_pipeline',
+                'description': 'Get recruitment metrics: open positions, applicants, hiring funnel',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'start_date': {'type': 'string'},
+                        'end_date': {'type': 'string'}
+                    }
+                }
+            },
+            # CRM & Sales Pipeline
+            {
+                'name': 'get_crm_pipeline',
+                'description': 'Get CRM pipeline: leads, opportunities, conversion rates by stage',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'start_date': {'type': 'string'},
+                        'end_date': {'type': 'string'}
+                    }
+                }
+            },
+            {
+                'name': 'get_sales_team_performance',
+                'description': 'Analyze sales team performance: quotas, achievements, win rates',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'start_date': {'type': 'string'},
+                        'end_date': {'type': 'string'},
+                        'team_id': {'type': 'integer', 'description': 'Optional: specific team'}
+                    }
+                }
+            },
+            # Operations & Inventory
+            {
+                'name': 'get_inventory_status',
+                'description': 'Get inventory levels, stock movements, and warehouse analytics',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'warehouse_id': {'type': 'integer', 'description': 'Optional: specific warehouse'},
+                        'low_stock_threshold': {'type': 'number', 'description': 'Alert threshold'}
+                    }
+                }
+            },
+            {
+                'name': 'get_purchase_analysis',
+                'description': 'Analyze purchase orders: spending by vendor, delivery performance',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'start_date': {'type': 'string'},
+                        'end_date': {'type': 'string'}
+                    }
+                }
+            },
+            # Project Management
+            {
+                'name': 'get_project_status',
+                'description': 'Get project status: progress, task completion, resource allocation',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'project_id': {'type': 'integer', 'description': 'Optional: specific project'},
+                        'include_archived': {'type': 'boolean', 'description': 'Include archived projects'}
+                    }
+                }
+            },
+            # KPIs & Cross-functional Analytics
+            {
+                'name': 'get_business_kpis',
+                'description': 'Get comprehensive business KPIs: revenue, profit margins, employee productivity, customer satisfaction',
+                'inputSchema': {
+                    'type': 'object',
+                    'properties': {
+                        'period': {'type': 'string', 'description': 'month, quarter, year'},
+                        'include_trends': {'type': 'boolean', 'description': 'Include period-over-period trends'}
+                    }
+                }
             }
         ]
+
+        # Add dynamic tools
+        dynamic_tool_list = dynamic_tools.get_all_dynamic_tools()
+        tools.extend(dynamic_tool_list)
+
+        logger.info(f"Total tools (including {len(dynamic_tool_list)} dynamic): {len(tools)}")
 
         return build_response(True, tools)
 
@@ -293,6 +480,7 @@ def call_tool():
 
         odoo = get_odoo_connection()
 
+        # Financial & Sales
         if tool_name == 'get_sales_summary':
             result = get_sales_summary(odoo, arguments)
         elif tool_name == 'get_revenue_by_period':
@@ -301,6 +489,35 @@ def call_tool():
             result = get_top_customers(odoo, arguments)
         elif tool_name == 'get_expense_analysis':
             result = get_expense_analysis(odoo, arguments)
+        # HR & Workforce
+        elif tool_name == 'get_employee_metrics':
+            result = get_employee_metrics(odoo, arguments)
+        elif tool_name == 'get_attendance_analysis':
+            result = get_attendance_analysis(odoo, arguments)
+        elif tool_name == 'get_timesheet_summary':
+            result = get_timesheet_summary(odoo, arguments)
+        elif tool_name == 'get_recruitment_pipeline':
+            result = get_recruitment_pipeline(odoo, arguments)
+        # CRM & Sales Pipeline
+        elif tool_name == 'get_crm_pipeline':
+            result = get_crm_pipeline(odoo, arguments)
+        elif tool_name == 'get_sales_team_performance':
+            result = get_sales_team_performance(odoo, arguments)
+        # Operations & Inventory
+        elif tool_name == 'get_inventory_status':
+            result = get_inventory_status(odoo, arguments)
+        elif tool_name == 'get_purchase_analysis':
+            result = get_purchase_analysis(odoo, arguments)
+        # Project Management
+        elif tool_name == 'get_project_status':
+            result = get_project_status(odoo, arguments)
+        # KPIs
+        elif tool_name == 'get_business_kpis':
+            result = get_business_kpis(odoo, arguments)
+        # Try dynamic tools
+        elif tool_name in dynamic_tools.DYNAMIC_FUNCTIONS:
+            logger.info(f"Calling dynamic tool: {tool_name}")
+            result = dynamic_tools.call_dynamic_tool(tool_name, odoo, arguments, logger)
         else:
             return build_response(False, error=f'Unknown tool: {tool_name}'), 404
 
@@ -483,6 +700,472 @@ def get_expense_analysis(odoo, args):
         }
 
 
+### HR & WORKFORCE FUNCTIONS ###
+
+def get_employee_metrics(odoo, args):
+    """Get employee metrics and workforce analytics"""
+    try:
+        Employee = odoo.env['hr.employee']
+        group_by = args.get('group_by', 'department')
+
+        employees = Employee.search_read(
+            [('active', '=', True)],
+            ['name', 'department_id', 'job_id', 'contract_id', 'work_email']
+        )
+
+        total_count = len(employees)
+
+        if group_by == 'department':
+            groups = {}
+            for emp in employees:
+                dept = emp['department_id'][1] if emp.get('department_id') else 'No Department'
+                groups[dept] = groups.get(dept, 0) + 1
+
+            return {
+                'total_employees': total_count,
+                'by_department': [{'department': k, 'count': v} for k, v in groups.items()]
+            }
+
+        elif group_by == 'job':
+            groups = {}
+            for emp in employees:
+                job = emp['job_id'][1] if emp.get('job_id') else 'No Job Title'
+                groups[job] = groups.get(job, 0) + 1
+
+            return {
+                'total_employees': total_count,
+                'by_job': [{'job_title': k, 'count': v} for k, v in groups.items()]
+            }
+
+        return {'total_employees': total_count, 'employees': employees[:50]}
+
+    except Exception as e:
+        logger.error(f"Error in get_employee_metrics: {str(e)}")
+        return {'error': str(e), 'total_employees': 0}
+
+
+def get_attendance_analysis(odoo, args):
+    """Analyze attendance patterns"""
+    try:
+        Attendance = odoo.env['hr.attendance']
+
+        domain = []
+        if args.get('start_date'):
+            domain.append(('check_in', '>=', args['start_date']))
+        if args.get('end_date'):
+            domain.append(('check_in', '<=', args['end_date']))
+        if args.get('employee_id'):
+            domain.append(('employee_id', '=', args['employee_id']))
+
+        attendances = Attendance.search_read(
+            domain,
+            ['employee_id', 'check_in', 'check_out', 'worked_hours'],
+            limit=1000
+        )
+
+        # Calculate metrics
+        total_hours = sum(a.get('worked_hours', 0) for a in attendances)
+        employee_hours = {}
+
+        for att in attendances:
+            emp_id = att['employee_id'][0]
+            emp_name = att['employee_id'][1]
+            if emp_id not in employee_hours:
+                employee_hours[emp_id] = {'employee': emp_name, 'total_hours': 0, 'days': 0}
+            employee_hours[emp_id]['total_hours'] += att.get('worked_hours', 0)
+            employee_hours[emp_id]['days'] += 1
+
+        return {
+            'total_hours_worked': total_hours,
+            'total_attendance_records': len(attendances),
+            'by_employee': list(employee_hours.values())[:20]
+        }
+
+    except Exception as e:
+        logger.error(f"Error in get_attendance_analysis: {str(e)}")
+        return {'error': str(e), 'message': 'Attendance module may not be installed'}
+
+
+def get_timesheet_summary(odoo, args):
+    """Get timesheet data"""
+    try:
+        Timesheet = odoo.env['account.analytic.line']
+        group_by = args.get('group_by', 'employee')
+
+        domain = [('project_id', '!=', False)]
+        if args.get('start_date'):
+            domain.append(('date', '>=', args['start_date']))
+        if args.get('end_date'):
+            domain.append(('date', '<=', args['end_date']))
+
+        timesheets = Timesheet.search_read(
+            domain,
+            ['employee_id', 'project_id', 'task_id', 'unit_amount', 'date'],
+            limit=1000
+        )
+
+        if group_by == 'employee':
+            groups = {}
+            for ts in timesheets:
+                emp = ts['employee_id'][1] if ts.get('employee_id') else 'Unknown'
+                if emp not in groups:
+                    groups[emp] = {'employee': emp, 'hours': 0, 'entries': 0}
+                groups[emp]['hours'] += ts.get('unit_amount', 0)
+                groups[emp]['entries'] += 1
+
+            return list(groups.values())
+
+        elif group_by == 'project':
+            groups = {}
+            for ts in timesheets:
+                proj = ts['project_id'][1] if ts.get('project_id') else 'No Project'
+                if proj not in groups:
+                    groups[proj] = {'project': proj, 'hours': 0, 'entries': 0}
+                groups[proj]['hours'] += ts.get('unit_amount', 0)
+                groups[proj]['entries'] += 1
+
+            return list(groups.values())
+
+        return timesheets[:50]
+
+    except Exception as e:
+        logger.error(f"Error in get_timesheet_summary: {str(e)}")
+        return {'error': str(e), 'message': 'Timesheet/Project module may not be installed'}
+
+
+def get_recruitment_pipeline(odoo, args):
+    """Get recruitment metrics"""
+    try:
+        Job = odoo.env['hr.job']
+        Applicant = odoo.env['hr.applicant']
+
+        # Open positions
+        jobs = Job.search_read(
+            [('state', '=', 'recruit')],
+            ['name', 'no_of_recruitment', 'no_of_hired_employee']
+        )
+
+        # Applicants
+        domain = []
+        if args.get('start_date'):
+            domain.append(('create_date', '>=', args['start_date']))
+        if args.get('end_date'):
+            domain.append(('create_date', '<=', args['end_date']))
+
+        applicants = Applicant.search_read(
+            domain,
+            ['name', 'job_id', 'stage_id', 'create_date'],
+            limit=200
+        )
+
+        # Group by stage
+        stages = {}
+        for app in applicants:
+            stage = app['stage_id'][1] if app.get('stage_id') else 'Unknown'
+            stages[stage] = stages.get(stage, 0) + 1
+
+        return {
+            'open_positions': len(jobs),
+            'total_applicants': len(applicants),
+            'by_stage': [{'stage': k, 'count': v} for k, v in stages.items()],
+            'jobs': jobs
+        }
+
+    except Exception as e:
+        logger.error(f"Error in get_recruitment_pipeline: {str(e)}")
+        return {'error': str(e), 'message': 'Recruitment module may not be installed'}
+
+
+### CRM & SALES FUNCTIONS ###
+
+def get_crm_pipeline(odoo, args):
+    """Get CRM pipeline metrics"""
+    try:
+        Lead = odoo.env['crm.lead']
+
+        domain = [('type', '=', 'opportunity')]
+        if args.get('start_date'):
+            domain.append(('create_date', '>=', args['start_date']))
+        if args.get('end_date'):
+            domain.append(('create_date', '<=', args['end_date']))
+
+        opportunities = Lead.search_read(
+            domain,
+            ['name', 'partner_id', 'expected_revenue', 'probability', 'stage_id', 'user_id'],
+            limit=200
+        )
+
+        # Calculate metrics
+        total_value = sum(o.get('expected_revenue', 0) for o in opportunities)
+        weighted_value = sum(o.get('expected_revenue', 0) * o.get('probability', 0) / 100 for o in opportunities)
+
+        # Group by stage
+        stages = {}
+        for opp in opportunities:
+            stage = opp['stage_id'][1] if opp.get('stage_id') else 'Unknown'
+            if stage not in stages:
+                stages[stage] = {'stage': stage, 'count': 0, 'total_value': 0}
+            stages[stage]['count'] += 1
+            stages[stage]['total_value'] += opp.get('expected_revenue', 0)
+
+        return {
+            'total_opportunities': len(opportunities),
+            'total_pipeline_value': total_value,
+            'weighted_pipeline_value': weighted_value,
+            'by_stage': list(stages.values())
+        }
+
+    except Exception as e:
+        logger.error(f"Error in get_crm_pipeline: {str(e)}")
+        return {'error': str(e), 'message': 'CRM module may not be installed'}
+
+
+def get_sales_team_performance(odoo, args):
+    """Analyze sales team performance"""
+    try:
+        Team = odoo.env['crm.team']
+        SaleOrder = odoo.env['sale.order']
+
+        teams = Team.search_read([], ['name', 'user_id', 'member_ids'])
+
+        domain = [('state', 'in', ['sale', 'done'])]
+        if args.get('start_date'):
+            domain.append(('date_order', '>=', args['start_date']))
+        if args.get('end_date'):
+            domain.append(('date_order', '<=', args['end_date']))
+        if args.get('team_id'):
+            domain.append(('team_id', '=', args['team_id']))
+
+        orders = SaleOrder.search_read(
+            domain,
+            ['team_id', 'user_id', 'amount_total'],
+            limit=1000
+        )
+
+        # Group by team
+        team_performance = {}
+        for order in orders:
+            team = order['team_id'][1] if order.get('team_id') else 'No Team'
+            if team not in team_performance:
+                team_performance[team] = {'team': team, 'revenue': 0, 'orders': 0}
+            team_performance[team]['revenue'] += order['amount_total']
+            team_performance[team]['orders'] += 1
+
+        return {
+            'teams': teams,
+            'performance': list(team_performance.values())
+        }
+
+    except Exception as e:
+        logger.error(f"Error in get_sales_team_performance: {str(e)}")
+        return {'error': str(e)}
+
+
+### OPERATIONS & INVENTORY FUNCTIONS ###
+
+def get_inventory_status(odoo, args):
+    """Get inventory levels and analytics"""
+    try:
+        Product = odoo.env['product.product']
+        Quant = odoo.env['stock.quant']
+
+        domain = []
+        if args.get('warehouse_id'):
+            domain.append(('location_id.warehouse_id', '=', args['warehouse_id']))
+
+        quants = Quant.search_read(
+            domain,
+            ['product_id', 'location_id', 'quantity', 'reserved_quantity'],
+            limit=500
+        )
+
+        # Calculate available quantity by product
+        products = {}
+        for quant in quants:
+            prod_id = quant['product_id'][0]
+            prod_name = quant['product_id'][1]
+            available = quant['quantity'] - quant.get('reserved_quantity', 0)
+
+            if prod_id not in products:
+                products[prod_id] = {'product': prod_name, 'available': 0, 'reserved': 0}
+            products[prod_id]['available'] += available
+            products[prod_id]['reserved'] += quant.get('reserved_quantity', 0)
+
+        # Filter low stock if threshold provided
+        result = list(products.values())
+        if args.get('low_stock_threshold'):
+            threshold = args['low_stock_threshold']
+            result = [p for p in result if p['available'] < threshold]
+
+        return result[:100]
+
+    except Exception as e:
+        logger.error(f"Error in get_inventory_status: {str(e)}")
+        return {'error': str(e), 'message': 'Inventory module may not be installed'}
+
+
+def get_purchase_analysis(odoo, args):
+    """Analyze purchase orders"""
+    try:
+        Purchase = odoo.env['purchase.order']
+
+        domain = [('state', 'in', ['purchase', 'done'])]
+        if args.get('start_date'):
+            domain.append(('date_order', '>=', args['start_date']))
+        if args.get('end_date'):
+            domain.append(('date_order', '<=', args['end_date']))
+
+        purchases = Purchase.search_read(
+            domain,
+            ['name', 'partner_id', 'date_order', 'amount_total', 'state'],
+            limit=200
+        )
+
+        # Group by vendor
+        vendors = {}
+        for po in purchases:
+            vendor = po['partner_id'][1] if po.get('partner_id') else 'Unknown'
+            if vendor not in vendors:
+                vendors[vendor] = {'vendor': vendor, 'total_spent': 0, 'order_count': 0}
+            vendors[vendor]['total_spent'] += po['amount_total']
+            vendors[vendor]['order_count'] += 1
+
+        total_spent = sum(po['amount_total'] for po in purchases)
+
+        return {
+            'total_purchase_orders': len(purchases),
+            'total_spent': total_spent,
+            'by_vendor': sorted(list(vendors.values()), key=lambda x: x['total_spent'], reverse=True)[:20]
+        }
+
+    except Exception as e:
+        logger.error(f"Error in get_purchase_analysis: {str(e)}")
+        return {'error': str(e), 'message': 'Purchase module may not be installed'}
+
+
+### PROJECT MANAGEMENT FUNCTIONS ###
+
+def get_project_status(odoo, args):
+    """Get project status and task completion"""
+    try:
+        Project = odoo.env['project.project']
+        Task = odoo.env['project.task']
+
+        domain = []
+        if args.get('project_id'):
+            domain.append(('id', '=', args['project_id']))
+        if not args.get('include_archived', False):
+            domain.append(('active', '=', True))
+
+        projects = Project.search_read(
+            domain,
+            ['name', 'user_id', 'task_count', 'task_ids'],
+            limit=50
+        )
+
+        project_data = []
+        for proj in projects:
+            # Get tasks for this project
+            tasks = Task.search_read(
+                [('project_id', '=', proj['id'])],
+                ['name', 'stage_id', 'user_ids', 'date_deadline']
+            )
+
+            completed = len([t for t in tasks if t.get('stage_id') and 'done' in t['stage_id'][1].lower()])
+
+            project_data.append({
+                'project': proj['name'],
+                'total_tasks': len(tasks),
+                'completed_tasks': completed,
+                'completion_rate': (completed / len(tasks) * 100) if tasks else 0
+            })
+
+        return project_data
+
+    except Exception as e:
+        logger.error(f"Error in get_project_status: {str(e)}")
+        return {'error': str(e), 'message': 'Project module may not be installed'}
+
+
+### BUSINESS KPIs FUNCTION ###
+
+def get_business_kpis(odoo, args):
+    """Get comprehensive business KPIs"""
+    try:
+        period = args.get('period', 'month')
+
+        # Calculate date ranges
+        end_date = datetime.now().date()
+        if period == 'month':
+            start_date = end_date - timedelta(days=30)
+            previous_start = start_date - timedelta(days=30)
+        elif period == 'quarter':
+            start_date = end_date - timedelta(days=90)
+            previous_start = start_date - timedelta(days=90)
+        else:  # year
+            start_date = end_date - timedelta(days=365)
+            previous_start = start_date - timedelta(days=365)
+
+        Invoice = odoo.env['account.move']
+
+        # Current period revenue
+        current_invoices = Invoice.search_read(
+            [
+                ('move_type', '=', 'out_invoice'),
+                ('state', '=', 'posted'),
+                ('invoice_date', '>=', start_date.isoformat()),
+                ('invoice_date', '<=', end_date.isoformat())
+            ],
+            ['amount_total']
+        )
+        current_revenue = sum(inv['amount_total'] for inv in current_invoices)
+
+        # Previous period revenue (for trends)
+        if args.get('include_trends', False):
+            previous_invoices = Invoice.search_read(
+                [
+                    ('move_type', '=', 'out_invoice'),
+                    ('state', '=', 'posted'),
+                    ('invoice_date', '>=', previous_start.isoformat()),
+                    ('invoice_date', '<', start_date.isoformat())
+                ],
+                ['amount_total']
+            )
+            previous_revenue = sum(inv['amount_total'] for inv in previous_invoices)
+            revenue_growth = ((current_revenue - previous_revenue) / previous_revenue * 100) if previous_revenue else 0
+        else:
+            revenue_growth = None
+
+        # Employee count
+        try:
+            Employee = odoo.env['hr.employee']
+            employee_count = Employee.search_count([('active', '=', True)])
+        except:
+            employee_count = 0
+
+        # Customer count
+        Partner = odoo.env['res.partner']
+        customer_count = Partner.search_count([('customer_rank', '>', 0)])
+
+        kpis = {
+            'period': period,
+            'revenue': current_revenue,
+            'invoice_count': len(current_invoices),
+            'employee_count': employee_count,
+            'customer_count': customer_count,
+            'revenue_per_employee': current_revenue / employee_count if employee_count > 0 else 0,
+        }
+
+        if revenue_growth is not None:
+            kpis['revenue_growth_percent'] = revenue_growth
+
+        return kpis
+
+    except Exception as e:
+        logger.error(f"Error in get_business_kpis: {str(e)}")
+        return {'error': str(e)}
+
+
 if __name__ == '__main__':
     print("=" * 60)
     print("Claro Distribution MCP Server - Standalone Version")
@@ -492,6 +1175,6 @@ if __name__ == '__main__':
     print(f"\nStarting server...")
     print(f"\nHealth check: http://localhost:5000/mcp/health")
     print("=" * 60)
-    
+
     # Run Flask app
     app.run(host='0.0.0.0', port=5000, debug=False)

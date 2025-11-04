@@ -405,26 +405,36 @@ IMPORTANT:
                 'raw_output': generated_text
             }), 500
 
-        # Register the tool dynamically
+        # Register the tool on MCP server
         tool_name = tool_definition['name']
-        dynamic_tools.register_dynamic_tool(tool_definition, function_code)
 
-        # Save to file for persistence
-        file_path = dynamic_tools.save_dynamic_tool_to_file(
-            tool_name,
-            tool_definition,
-            function_code
-        )
-
-        # Notify MCP server to reload tools
         try:
-            requests.post(
-                f"{MCP_SERVER_URL}/mcp/reload",
-                json={"api_key": MCP_API_KEY},
-                timeout=10
+            # Send tool to MCP server for registration
+            mcp_response = requests.post(
+                f"{MCP_SERVER_URL}/mcp/register-tool",
+                json={
+                    "api_key": MCP_API_KEY,
+                    "tool_definition": tool_definition,
+                    "function_code": function_code
+                },
+                timeout=30
             )
-        except:
-            pass  # MCP server might not have reload endpoint yet
+
+            if mcp_response.status_code != 200:
+                logger.error(f"Failed to register tool on MCP server: {mcp_response.text}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Failed to register tool on MCP server: {mcp_response.text}'
+                }), 500
+
+            logger.info(f"✅ Tool '{tool_name}' registered on MCP server successfully!")
+
+        except Exception as e:
+            logger.error(f"Error registering tool on MCP server: {str(e)}")
+            return jsonify({
+                'success': False,
+                'error': f'Error registering tool on MCP server: {str(e)}'
+            }), 500
 
         logger.info(f"✅ Tool '{tool_name}' created successfully!")
 
@@ -433,7 +443,6 @@ IMPORTANT:
             'tool_name': tool_name,
             'tool_definition': tool_definition,
             'function_code': function_code,
-            'file_path': file_path,
             'message': f"Tool '{tool_name}' has been created and is now available!"
         })
 
