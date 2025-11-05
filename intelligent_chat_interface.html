@@ -1607,6 +1607,10 @@
             const vizDiv = document.createElement('div');
             vizDiv.className = 'canvas-viz-item';
             vizDiv.id = vizId;
+
+            // Process content for chart embeds (same as Home page does)
+            const { content: processedContent, charts } = processChartEmbeds(content);
+
             vizDiv.innerHTML = `
                 <div class="canvas-viz-header">
                     <div class="canvas-viz-title">${title}</div>
@@ -1614,9 +1618,16 @@
                         <button class="canvas-viz-btn remove" onclick="removeVisualization('${vizId}')">🗑️ Remove</button>
                     </div>
                 </div>
-                <div class="canvas-viz-content">${content}</div>
+                <div class="canvas-viz-content">${processedContent}</div>
             `;
             canvas.appendChild(vizDiv);
+
+            // Render any embedded charts after DOM is updated
+            setTimeout(() => {
+                charts.forEach(chart => {
+                    renderChart(chart.data, `chart-container-${chart.id}`);
+                });
+            }, 100);
         }
 
         function removeVisualization(vizId) {
