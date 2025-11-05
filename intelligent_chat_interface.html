@@ -6,6 +6,8 @@
     <title>Intelligent Odoo AI Assistant</title>
     <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- ApexCharts for modern data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -643,13 +645,250 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             text-align: center;
         }
+
+        /* Report Builder Styles */
+        .builder-container {
+            display: flex;
+            height: 100%;
+            gap: 0;
+        }
+
+        .canvas-section {
+            flex: 2;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .canvas-header {
+            background: white;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .canvas-header h2 {
+            font-size: 20px;
+            color: #333;
+            margin: 0;
+        }
+
+        .save-canvas-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .save-canvas-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        .report-canvas {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .canvas-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            text-align: center;
+        }
+
+        .canvas-placeholder p {
+            margin: 10px 0 5px 0;
+            font-size: 16px;
+        }
+
+        .canvas-hint {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .builder-chat-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            min-width: 400px;
+        }
+
+        .builder-chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+            text-align: center;
+        }
+
+        .builder-chat-header h3 {
+            font-size: 18px;
+            margin: 0 0 5px 0;
+        }
+
+        .builder-chat-header p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .viz-selector {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .viz-label {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .viz-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .viz-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: white;
+            border: 1.5px solid #667eea;
+            color: #667eea;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .viz-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .viz-btn svg {
+            flex-shrink: 0;
+        }
+
+        .builder-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #fafbfc;
+        }
+
+        .builder-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+        }
+
+        .builder-input-container input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .builder-input-container input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .builder-input-container button {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .builder-input-container button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .canvas-viz-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .canvas-viz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .canvas-viz-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .canvas-viz-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .canvas-viz-btn {
+            padding: 6px 12px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .canvas-viz-btn:hover {
+            background: #e9ecef;
+        }
+
+        .canvas-viz-btn.remove {
+            color: #dc3545;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <!-- Navigation Menu -->
         <div class="nav-menu">
-            <a href="#" class="nav-link active" data-page="home">📊 Report Builder</a>
+            <a href="#" class="nav-link active" data-page="home">🏠 Home</a>
+            <a href="#" class="nav-link" data-page="builder">📊 Report Builder</a>
             <a href="#" class="nav-link" data-page="reports">💾 Saved Reports</a>
         </div>
 
@@ -661,10 +900,10 @@
                     AI Connected
                 </div>
                 <h1>
-                    📊 Report Builder
+                    🤖 Intelligent Odoo Assistant
                     <span class="ai-badge">Powered by Claude</span>
                 </h1>
-                <p>Build custom reports with data, charts, and tables - then save them!</p>
+                <p>Ask me anything about your business - I'll understand and help!</p>
         </div>
 
         <div class="quick-actions">
@@ -705,9 +944,88 @@
                     onkeypress="handleKeyPress(event)"
                 >
                 <button id="sendButton" onclick="sendMessage()">Send</button>
-                <button id="saveReportButton" onclick="showSaveReportModal()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">💾 Save Report</button>
             </div>
         </div>
+        </div>
+
+        <!-- Report Builder Page -->
+        <div id="builderPage" class="page">
+            <div class="builder-container">
+                <!-- Left Side: Canvas -->
+                <div class="canvas-section">
+                    <div class="canvas-header">
+                        <h2>📊 Report Canvas</h2>
+                        <button onclick="saveBuilderReport()" class="save-canvas-btn">💾 Save Report</button>
+                    </div>
+                    <div id="reportCanvas" class="report-canvas">
+                        <div class="canvas-placeholder">
+                            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3">
+                                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                            </svg>
+                            <p>Your visualizations will appear here</p>
+                            <p class="canvas-hint">Use the chat to request data and visualizations</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: Chat -->
+                <div class="builder-chat-section">
+                    <div class="builder-chat-header">
+                        <h3>💬 Data Assistant</h3>
+                        <p>Request visualizations and data</p>
+                    </div>
+
+                    <!-- Visualization Type Selector -->
+                    <div class="viz-selector">
+                        <p class="viz-label">Quick Visualizations:</p>
+                        <div class="viz-options">
+                            <button class="viz-btn" onclick="suggestViz('bar')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="12" width="4" height="8"/><rect x="10" y="8" width="4" height="12"/><rect x="16" y="4" width="4" height="16"/></svg>
+                                Bar
+                            </button>
+                            <button class="viz-btn" onclick="suggestViz('line')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/></svg>
+                                Line
+                            </button>
+                            <button class="viz-btn" onclick="suggestViz('pie')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2v10l8.66 5L12 2z"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                                Pie
+                            </button>
+                            <button class="viz-btn" onclick="suggestViz('area')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" opacity="0.6"><path d="M3 18 L9 12 L13 16 L21 8 L21 18 Z"/></svg>
+                                Area
+                            </button>
+                            <button class="viz-btn" onclick="suggestViz('table')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+                                Table
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="builder-messages" id="builderMessages">
+                        <div class="message system">
+                            <div class="message-content">
+                                👋 Hi! I'm your data assistant. Ask me to create visualizations and I'll add them to your canvas.
+                                <br><br>
+                                Try: "Show me sales by month as a bar chart" or "Create a table of top customers"
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="builder-input-container">
+                        <input
+                            type="text"
+                            id="builderInput"
+                            placeholder="Request a visualization..."
+                            onkeypress="handleBuilderKeyPress(event)"
+                        >
+                        <button id="builderSendButton" onclick="sendBuilderMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Reports Page -->
@@ -1175,10 +1493,176 @@
 
             if (page === 'home') {
                 document.getElementById('homePage').classList.add('active');
+            } else if (page === 'builder') {
+                document.getElementById('builderPage').classList.add('active');
             } else if (page === 'reports') {
                 document.getElementById('reportsPage').classList.add('active');
                 loadReports();
             }
+        }
+
+        // ===== REPORT BUILDER FUNCTIONS =====
+        let builderConversationHistory = [];
+        let canvasVisualizationsCount = 0;
+
+        function suggestViz(type) {
+            const suggestions = {
+                'bar': 'Create a bar chart showing ',
+                'line': 'Create a line chart showing ',
+                'pie': 'Create a pie chart showing ',
+                'area': 'Create an area chart showing ',
+                'table': 'Create a table showing '
+            };
+            document.getElementById('builderInput').value = suggestions[type] || '';
+            document.getElementById('builderInput').focus();
+        }
+
+        function handleBuilderKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendBuilderMessage();
+            }
+        }
+
+        async function sendBuilderMessage() {
+            const input = document.getElementById('builderInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message to builder chat
+            addBuilderMessage(message, 'user');
+            input.value = '';
+
+            // Add to conversation history
+            builderConversationHistory.push({role: 'user', content: message});
+
+            // Show typing indicator
+            showBuilderTyping();
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/chat`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        message: message,
+                        history: builderConversationHistory.slice(0, -1)
+                    })
+                });
+
+                const result = await response.json();
+                hideBuilderTyping();
+
+                if (result.success) {
+                    // Add response to chat
+                    addBuilderMessage(result.message, 'assistant');
+                    builderConversationHistory.push({role: 'assistant', content: result.message});
+
+                    // Add visualization to canvas
+                    addVisualizationToCanvas(result.message, message);
+                } else {
+                    addBuilderMessage(`❌ Error: ${result.error}`, 'system');
+                }
+            } catch (error) {
+                hideBuilderTyping();
+                addBuilderMessage(`❌ Connection Error: ${error.message}`, 'system');
+            }
+        }
+
+        function addBuilderMessage(content, type) {
+            const messagesDiv = document.getElementById('builderMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = formatMessage(content);
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showBuilderTyping() {
+            const messagesDiv = document.getElementById('builderMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'builderTypingIndicator';
+            typingDiv.innerHTML = '<div class="typing-indicator active"><span></span><span></span><span></span></div>';
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideBuilderTyping() {
+            const typingDiv = document.getElementById('builderTypingIndicator');
+            if (typingDiv) typingDiv.remove();
+        }
+
+        function addVisualizationToCanvas(content, title) {
+            const canvas = document.getElementById('reportCanvas');
+
+            // Remove placeholder if exists
+            const placeholder = canvas.querySelector('.canvas-placeholder');
+            if (placeholder) placeholder.remove();
+
+            // Create viz item
+            canvasVisualizationsCount++;
+            const vizId = 'viz_' + canvasVisualizationsCount;
+            const vizDiv = document.createElement('div');
+            vizDiv.className = 'canvas-viz-item';
+            vizDiv.id = vizId;
+            vizDiv.innerHTML = `
+                <div class="canvas-viz-header">
+                    <div class="canvas-viz-title">${title}</div>
+                    <div class="canvas-viz-actions">
+                        <button class="canvas-viz-btn remove" onclick="removeVisualization('${vizId}')">🗑️ Remove</button>
+                    </div>
+                </div>
+                <div class="canvas-viz-content">${content}</div>
+            `;
+            canvas.appendChild(vizDiv);
+        }
+
+        function removeVisualization(vizId) {
+            document.getElementById(vizId)?.remove();
+
+            // Show placeholder if no more visualizations
+            const canvas = document.getElementById('reportCanvas');
+            if (canvas.querySelectorAll('.canvas-viz-item').length === 0) {
+                canvas.innerHTML = `
+                    <div class="canvas-placeholder">
+                        <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3">
+                            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                        </svg>
+                        <p>Your visualizations will appear here</p>
+                        <p class="canvas-hint">Use the chat to request data and visualizations</p>
+                    </div>
+                `;
+            }
+        }
+
+        function saveBuilderReport() {
+            const canvas = document.getElementById('reportCanvas');
+            const visualizations = canvas.querySelectorAll('.canvas-viz-item');
+
+            if (visualizations.length === 0) {
+                alert('Please create some visualizations first!');
+                return;
+            }
+
+            const reportName = prompt('Enter a name for this report:');
+            if (!reportName) return;
+
+            const report = {
+                id: 'builder_report_' + Date.now(),
+                name: reportName,
+                description: 'Created in Report Builder',
+                created: new Date().toISOString(),
+                conversationHistory: builderConversationHistory,
+                messagesHtml: canvas.innerHTML
+            };
+
+            saveReport(report);
+            alert('Report saved successfully!');
         }
 
         // Report Management
