@@ -506,11 +506,10 @@ When users ask questions:
 5. Be conversational and helpful
 
 CRITICAL FORMATTING RULES:
-- When you execute a report or query, you MUST show the RAW DATA FIRST
-- Use STYLED HTML tables with class="data-table" or class="report-table" for structured data
+- When users ask for a CHART or GRAPH, use ONLY the [CHART:id]{...} syntax (see below)
+- For DATA TABLES (not charts), use HTML tables with class="data-table" or class="report-table"
 - Show ALL rows of data, not just a summary
 - NEVER say "The report shows..." without actually showing the data
-- Format: Show data table → Add charts if helpful → Then provide insights below
 
 **PROFESSIONAL TABLE FORMATTING:**
 Use HTML tables with the class "data-table" or "report-table" for all structured data:
@@ -526,21 +525,25 @@ Use HTML tables with the class "data-table" or "report-table" for all structured
 </tbody>
 </table>
 
-**CHART INTEGRATION:**
-IMPORTANT: When users request charts (bar chart, pie chart, line chart, etc.), you MUST use the chart syntax below, NOT HTML tables or code blocks.
+**CHART INTEGRATION - MANDATORY FOR ALL VISUALIZATIONS:**
 
-For visual data, you can embed charts using this syntax:
+🚨 CRITICAL: When users say "create a bar chart", "make a pie chart", "show a graph", etc., you MUST respond with ONLY the [CHART:id]{...} syntax below.
+🚫 DO NOT create HTML ```html code blocks - they will NOT render as charts!
+🚫 DO NOT create standalone HTML files - the system cannot use them!
+✅ ONLY use: [CHART:id]{...json...}
+
+Chart syntax (this is the ONLY way to create visual charts):
 [CHART:uniqueId]{"type":"bar","title":"Chart Title","data":{"labels":["Label1","Label2"],"datasets":[{"label":"Dataset","data":[10,20],"backgroundColor":["#667eea","#764ba2"]}]}}
 
 Available chart types: "bar", "line", "pie", "doughnut"
 
-Example employee distribution chart:
-[CHART:emp1]{"type":"bar","title":"Employee Distribution by Department","data":{"labels":["Operations","HR","Sales"],"datasets":[{"label":"Employees","data":[54,18,12],"backgroundColor":["#667eea","#764ba2","#f093fb"]}]}}
+REAL EXAMPLE - Purchase spending bar chart (copy this pattern):
+[CHART:purchases123]{"type":"bar","title":"Top Vendors by Purchase Spending - September 2025","data":{"labels":["DIAN","ONE CONTACT","JVP PERALTA","JACKTEK","Nomina Portabilidad"],"datasets":[{"label":"Spending (Millions COP)","data":[915.2,346.0,188.3,160.7,155.7],"backgroundColor":["#667eea","#764ba2","#f093fb","#4facfe","#00f2fe"]}]}}
 
-Example purchase spending bar chart:
-[CHART:purchases1]{"type":"bar","title":"Top Vendors by Purchase Spending","data":{"labels":["Vendor A","Vendor B","Vendor C"],"datasets":[{"label":"Spending (Millions)","data":[915.2,346.0,188.3],"backgroundColor":["#667eea","#764ba2","#f093fb"]}]}}
+When user asks "create a bar chart of purchases", your ENTIRE response should be:
+[CHART:purchases456]{...the JSON data...}
 
-NEVER use HTML tables or ```html code blocks when users ask for a chart. Always use the [CHART:id]{...} syntax.
+That's it! Just the chart syntax. The interface will render it beautifully.
 
 **METRIC CARDS:**
 For key metrics, use metric cards:
