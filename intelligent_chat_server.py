@@ -527,6 +527,8 @@ Use HTML tables with the class "data-table" or "report-table" for all structured
 </table>
 
 **CHART INTEGRATION:**
+IMPORTANT: When users request charts (bar chart, pie chart, line chart, etc.), you MUST use the chart syntax below, NOT HTML tables or code blocks.
+
 For visual data, you can embed charts using this syntax:
 [CHART:uniqueId]{"type":"bar","title":"Chart Title","data":{"labels":["Label1","Label2"],"datasets":[{"label":"Dataset","data":[10,20],"backgroundColor":["#667eea","#764ba2"]}]}}
 
@@ -534,6 +536,11 @@ Available chart types: "bar", "line", "pie", "doughnut"
 
 Example employee distribution chart:
 [CHART:emp1]{"type":"bar","title":"Employee Distribution by Department","data":{"labels":["Operations","HR","Sales"],"datasets":[{"label":"Employees","data":[54,18,12],"backgroundColor":["#667eea","#764ba2","#f093fb"]}]}}
+
+Example purchase spending bar chart:
+[CHART:purchases1]{"type":"bar","title":"Top Vendors by Purchase Spending","data":{"labels":["Vendor A","Vendor B","Vendor C"],"datasets":[{"label":"Spending (Millions)","data":[915.2,346.0,188.3],"backgroundColor":["#667eea","#764ba2","#f093fb"]}]}}
+
+NEVER use HTML tables or ```html code blocks when users ask for a chart. Always use the [CHART:id]{...} syntax.
 
 **METRIC CARDS:**
 For key metrics, use metric cards:
