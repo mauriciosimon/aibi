@@ -32,6 +32,14 @@ CLAUDE_API_KEY = os.getenv('ANTHROPIC_API_KEY', 'your-claude-api-key-here')
 MCP_SERVER_URL = os.getenv('MCP_SERVER_URL', 'https://mcp-odoo-production.up.railway.app')
 MCP_API_KEY = os.getenv('MCP_API_KEY', 'odoo-mcp-2025')
 
+# Power BI Configuration
+POWERBI_CLIENT_ID = os.getenv('POWERBI_CLIENT_ID')
+POWERBI_TENANT_ID = os.getenv('POWERBI_TENANT_ID')
+POWERBI_CLIENT_SECRET = os.getenv('POWERBI_CLIENT_SECRET')
+
+# Power BI MCP Server URL (for future deployment)
+POWERBI_MCP_SERVER_URL = os.getenv('POWERBI_MCP_SERVER_URL', 'http://localhost:5003')
+
 # Anthropic client (initialized on first use)
 _client = None
 
@@ -43,11 +51,141 @@ def get_anthropic_client():
     return _client
 
 
-def get_all_available_tools():
-    """Get all tools including dynamic ones"""
-    all_tools = list(MCP_TOOLS)  # Copy static tools
+def generate_chart_from_mcp_data(user_message, captured_data):
+    """
+    Generate chart JSON directly from MCP tool data.
 
-    # Fetch dynamic tools from MCP server
+    This is more reliable than parsing Claude's HTML output because we work
+    with structured data from the tools.
+
+    Args:
+        user_message: Original user request
+        captured_data: Dict with 'tool_name' and 'result' from MCP call
+
+    Returns:
+        Chart JSON string in [CHART:id]{...} format, or None if no chart needed
+    """
+    import re
+    import hashlib
+
+    if not captured_data:
+        return None
+
+    tool_name = captured_data.get('tool_name')
+    result = captured_data.get('result', {})
+
+    # Detect chart type from user message
+    chart_type = "bar"  # default
+    if 'pie' in user_message.lower():
+        chart_type = "pie"
+    elif 'line' in user_message.lower():
+        chart_type = "line"
+    elif 'doughnut' in user_message.lower():
+        chart_type = "doughnut"
+
+    # Extract limit from user message ("top 5", "top 10", etc.)
+    limit_match = re.search(r'top\s+(\d+)', user_message.lower())
+    limit = int(limit_match.group(1)) if limit_match else 10
+
+    chart_data = None
+
+    # Handle different MCP tools
+    if tool_name == "get_purchase_analysis" and result.get('by_vendor'):
+        vendors = result['by_vendor'][:limit]
+
+        chart_data = {
+            "type": chart_type,
+            "title": f"Top {len(vendors)} Vendors by Purchase Spending",
+            "data": {
+                "labels": [v['vendor'] for v in vendors],
+                "datasets": [{
+                    "label": "Spending (COP)",
+                    "data": [v['total_spent'] for v in vendors],
+                    "backgroundColor": [
+                        "#667eea", "#764ba2", "#f093fb", "#4facfe", "#00f2fe",
+                        "#43e97b", "#fa709a", "#fee140", "#30cfd0", "#a8edea",
+                        "#667eea", "#764ba2", "#f093fb", "#4facfe", "#00f2fe"
+                    ][:len(vendors)]
+                }]
+            }
+        }
+
+    elif tool_name == "get_top_customers" and result.get('customers'):
+        customers = result['customers'][:limit]
+
+        chart_data = {
+            "type": chart_type,
+            "title": f"Top {len(customers)} Customers by Revenue",
+            "data": {
+                "labels": [c['name'] for c in customers],
+                "datasets": [{
+                    "label": "Revenue (COP)",
+                    "data": [c['total_revenue'] for c in customers],
+                    "backgroundColor": [
+                        "#667eea", "#764ba2", "#f093fb", "#4facfe", "#00f2fe",
+                        "#43e97b", "#fa709a", "#fee140", "#30cfd0", "#a8edea"
+                    ][:len(customers)]
+                }]
+            }
+        }
+
+    elif tool_name == "get_sales_summary" and result.get('by_product'):
+        products = result['by_product'][:limit]
+
+        chart_data = {
+            "type": chart_type,
+            "title": f"Sales by Product",
+            "data": {
+                "labels": [p['product'] for p in products],
+                "datasets": [{
+                    "label": "Revenue (COP)",
+                    "data": [p['total_revenue'] for p in products],
+                    "backgroundColor": [
+                        "#667eea", "#764ba2", "#f093fb", "#4facfe", "#00f2fe",
+                        "#43e97b", "#fa709a", "#fee140", "#30cfd0", "#a8edea"
+                    ][:len(products)]
+                }]
+            }
+        }
+
+    elif tool_name == "get_revenue_by_period" and result.get('periods'):
+        periods = result['periods']
+
+        chart_data = {
+            "type": "line" if chart_type == "bar" else chart_type,  # Periods work better as line charts
+            "title": "Revenue Trends",
+            "data": {
+                "labels": [p['period'] for p in periods],
+                "datasets": [{
+                    "label": "Revenue (COP)",
+                    "data": [p['revenue'] for p in periods],
+                    "backgroundColor": "#667eea",
+                    "borderColor": "#667eea",
+                    "fill": False
+                }]
+            }
+        }
+
+    if chart_data:
+        # Generate unique ID
+        chart_id = hashlib.md5(f"{user_message}{tool_name}".encode()).hexdigest()[:8]
+        chart_embed = f"[CHART:{chart_id}]{json.dumps(chart_data)}"
+
+        logger.info(f"✅ Generated {chart_type} chart from {tool_name} with {len(chart_data['data']['labels'])} data points")
+        return chart_embed
+
+    return None
+
+
+def get_all_available_tools():
+    """Get all tools including dynamic ones from both Odoo and Power BI"""
+    # Start with Odoo static tools
+    all_tools = list(MCP_TOOLS)
+
+    # Add Power BI static tools
+    all_tools.extend(POWERBI_MCP_TOOLS)
+
+    # Fetch dynamic tools from Odoo MCP server
     try:
         response = requests.post(
             f"{MCP_SERVER_URL}/mcp/tools",
@@ -63,7 +201,7 @@ def get_all_available_tools():
                 for tool in mcp_tools:
                     if tool['name'] not in static_tool_names:
                         all_tools.append(tool)
-                logger.info(f"Loaded {len(all_tools)} total tools ({len(mcp_tools) - len(MCP_TOOLS)} dynamic)")
+                logger.info(f"Loaded {len(all_tools)} total tools (Odoo: {len(MCP_TOOLS)}, Power BI: {len(POWERBI_MCP_TOOLS)}, Dynamic: {len(mcp_tools) - len(MCP_TOOLS)})")
     except Exception as e:
         logger.warning(f"Could not fetch dynamic tools: {str(e)}")
 
@@ -237,19 +375,93 @@ MCP_TOOLS = [
     }
 ]
 
+# Power BI MCP Tools - Business Intelligence Data Warehouse
+POWERBI_MCP_TOOLS = [
+    {
+        "name": "powerbi_list_workspaces",
+        "description": "List all Power BI workspaces (data lakes) available. Use this to discover what data sources exist in Power BI.",
+        "input_schema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    {
+        "name": "powerbi_list_datasets",
+        "description": "List all datasets in a Power BI workspace. Datasets contain the actual business data models and tables.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "workspace_id": {"type": "string", "description": "The workspace/group ID to query"}
+            },
+            "required": ["workspace_id"]
+        }
+    },
+    {
+        "name": "powerbi_get_dataset_schema",
+        "description": "Get the schema (tables, columns, measures) of a Power BI dataset. Essential for understanding what data is available before querying.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "workspace_id": {"type": "string", "description": "The workspace/group ID"},
+                "dataset_id": {"type": "string", "description": "The dataset ID to inspect"}
+            },
+            "required": ["workspace_id", "dataset_id"]
+        }
+    },
+    {
+        "name": "powerbi_execute_dax",
+        "description": "Execute a DAX query against a Power BI dataset to retrieve data. Use this to get actual business data from Power BI data warehouse.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "workspace_id": {"type": "string", "description": "The workspace/group ID"},
+                "dataset_id": {"type": "string", "description": "The dataset ID to query"},
+                "dax_query": {"type": "string", "description": "The DAX query to execute (e.g., EVALUATE 'SalesTable')"}
+            },
+            "required": ["workspace_id", "dataset_id", "dax_query"]
+        }
+    }
+]
+
 
 def call_mcp_tool(tool_name, arguments):
-    """Call the MCP server to execute a tool"""
+    """Call the appropriate MCP server to execute a tool"""
     try:
-        response = requests.post(
-            f"{MCP_SERVER_URL}/mcp/tool/call",
-            json={
-                "api_key": MCP_API_KEY,
-                "name": tool_name,
-                "arguments": arguments
-            },
-            timeout=30
-        )
+        # Route to Power BI MCP server for Power BI tools
+        if tool_name.startswith('powerbi_'):
+            # Map tool name from our naming convention to Power BI MCP server convention
+            powerbi_tool_map = {
+                'powerbi_list_workspaces': 'list_workspaces',
+                'powerbi_list_datasets': 'list_datasets',
+                'powerbi_get_dataset_schema': 'get_dataset_schema',
+                'powerbi_execute_dax': 'execute_dax_query'
+            }
+
+            actual_tool_name = powerbi_tool_map.get(tool_name, tool_name)
+
+            # For now, call Power BI MCP HTTP server when it's deployed
+            # TODO: Update this URL when Power BI MCP is deployed to Railway
+            response = requests.post(
+                f"{POWERBI_MCP_SERVER_URL}/mcp/tool/call",
+                json={
+                    "api_key": MCP_API_KEY,
+                    "name": actual_tool_name,
+                    "arguments": arguments
+                },
+                timeout=30
+            )
+        else:
+            # Route to Odoo MCP server for Odoo tools
+            response = requests.post(
+                f"{MCP_SERVER_URL}/mcp/tool/call",
+                json={
+                    "api_key": MCP_API_KEY,
+                    "name": tool_name,
+                    "arguments": arguments
+                },
+                timeout=30
+            )
+
         response.raise_for_status()
         result = response.json()
 
@@ -258,12 +470,14 @@ def call_mcp_tool(tool_name, arguments):
         else:
             return {"error": result.get('error', 'Unknown error')}
     except Exception as e:
+        logger.error(f"Error calling MCP tool '{tool_name}': {str(e)}")
         return {"error": str(e)}
 
 
 def process_tool_calls(tool_calls):
-    """Process Claude's tool use requests"""
+    """Process Claude's tool use requests and capture chart-worthy data"""
     tool_results = []
+    captured_data = None  # Store data that could be charted
 
     for tool_use in tool_calls:
         if tool_use.type == "tool_use":
@@ -273,13 +487,22 @@ def process_tool_calls(tool_calls):
             # Call MCP server
             result = call_mcp_tool(tool_name, tool_input)
 
+            # Capture chart-worthy data from specific tools
+            chart_worthy_tools = ['get_purchase_analysis', 'get_top_customers', 'get_sales_summary', 'get_revenue_by_period']
+            if tool_name in chart_worthy_tools and result:
+                captured_data = {
+                    'tool_name': tool_name,
+                    'result': result
+                }
+                logger.info(f"📊 Captured chart-worthy data from {tool_name}")
+
             tool_results.append({
                 "type": "tool_result",
                 "tool_use_id": tool_use.id,
                 "content": json.dumps(result)
             })
 
-    return tool_results
+    return tool_results, captured_data
 
 
 @app.route('/')
@@ -495,15 +718,36 @@ def chat():
             max_tokens=8192,
             tools=all_tools,
             messages=messages,
-            system="""You are an intelligent business intelligence assistant with comprehensive access to Odoo ERP data.
-You can analyze all aspects of the business: financials, sales, HR, operations, projects, and provide KPI insights.
+            system="""You are an intelligent multi-source business intelligence assistant with comprehensive access to:
 
-When users ask questions:
-1. Use the appropriate tools to get data from Odoo
-2. ALWAYS display the actual data in a clear, formatted way (tables, lists with numbers)
-3. After showing the data, provide analysis and actionable insights
-4. Format currency as "COP $X,XXX,XXX" (Colombian Pesos with thousand separators)
-5. Be conversational and helpful
+**DATA SOURCES:**
+1. **Odoo ERP** - Operational data: sales, purchases, HR, inventory, projects, CRM, invoices
+2. **Power BI** - Data warehouse: aggregated analytics, historical trends, complex business models
+
+**YOUR ROLE:**
+Act as a senior business analyst who can:
+- Access and correlate data from multiple sources
+- Provide executive summaries and actionable insights
+- Identify trends, anomalies, and opportunities
+- Answer complex questions requiring cross-source analysis
+
+**INTELLIGENT SOURCE SELECTION:**
+- Use **Odoo tools** (get_*) for: transactional data, real-time operations, detailed records
+- Use **Power BI tools** (powerbi_*) for: data warehouse queries, complex analytics, historical trends
+- For comprehensive analysis, query BOTH sources and correlate findings
+
+**POWER BI WORKFLOW:**
+1. First, use `powerbi_list_workspaces` to discover available data lakes
+2. Then use `powerbi_list_datasets` to find relevant datasets
+3. Use `powerbi_get_dataset_schema` to understand table structure
+4. Finally, use `powerbi_execute_dax` to query data using DAX syntax
+
+**RESPONSE FORMAT:**
+1. Use appropriate tools to get data from the right source(s)
+2. ALWAYS display actual data in clear, formatted tables
+3. Provide analysis with actionable business insights
+4. Format currency as "COP $X,XXX,XXX" (Colombian Pesos)
+5. Be conversational and proactive
 
 CRITICAL FORMATTING RULES:
 - When users ask for a CHART or GRAPH, use ONLY the [CHART:id]{...} syntax (see below)
@@ -607,11 +851,14 @@ For HR and workforce questions, intelligently identify patterns and trends."""
         logger.info(f"Initial response received. Stop reason: {response.stop_reason}")
 
         # Handle tool use
+        captured_data = None  # Will store chart-worthy data from tools
         while response.stop_reason == "tool_use":
             logger.info("Processing tool calls...")
-            # Process tool calls
-            tool_results = process_tool_calls(response.content)
-            logger.info(f"Tool results: {tool_results}")
+            # Process tool calls and capture chart-worthy data
+            tool_results, tool_data = process_tool_calls(response.content)
+            if tool_data:
+                captured_data = tool_data  # Store for later chart generation
+            logger.info(f"Tool results received")
 
             # Continue conversation with tool results
             messages.append({
@@ -639,6 +886,17 @@ For HR and workforce questions, intelligently identify patterns and trends."""
             if block.type == "text":
                 assistant_message += block.text
 
+        # SMART CHART GENERATION: If user requested a chart and we have data, inject chart
+        chart_keywords = ['chart', 'graph', 'plot', 'visualiz']
+        user_wants_chart = any(keyword in user_message.lower() for keyword in chart_keywords)
+
+        if user_wants_chart and captured_data:
+            chart_embed = generate_chart_from_mcp_data(user_message, captured_data)
+            if chart_embed:
+                # Add chart to message
+                assistant_message += "\n\n" + chart_embed
+                logger.info("✅ Chart generated and injected into response")
+
         logger.info(f"Final assistant message length: {len(assistant_message)}")
         logger.info("=== CHAT REQUEST SUCCESSFUL ===")
 
@@ -663,6 +921,152 @@ For HR and workforce questions, intelligently identify patterns and trends."""
         logger.error(f"Error type: {type(e).__name__}")
         logger.error(f"Error message: {str(e)}")
         logger.error(f"Full traceback:\n{traceback.format_exc()}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/powerbi/list', methods=['GET'])
+def powerbi_list():
+    """
+    List available Power BI workspaces and reports
+    """
+    try:
+        # Check if Power BI credentials are configured
+        if not all([POWERBI_CLIENT_ID, POWERBI_TENANT_ID, POWERBI_CLIENT_SECRET]):
+            return jsonify({
+                'success': False,
+                'error': 'Power BI credentials not configured. Please set POWERBI_CLIENT_ID, POWERBI_TENANT_ID, and POWERBI_CLIENT_SECRET environment variables.'
+            }), 500
+
+        # Get Azure AD access token
+        token_url = f'https://login.microsoftonline.com/{POWERBI_TENANT_ID}/oauth2/v2.0/token'
+        token_data = {
+            'grant_type': 'client_credentials',
+            'client_id': POWERBI_CLIENT_ID,
+            'client_secret': POWERBI_CLIENT_SECRET,
+            'scope': 'https://analysis.windows.net/powerbi/api/.default'
+        }
+
+        logger.info("Fetching Power BI workspaces and reports")
+
+        token_response = requests.post(token_url, data=token_data)
+        token_response.raise_for_status()
+        access_token = token_response.json().get('access_token')
+
+        if not access_token:
+            raise Exception('Failed to get access token from Azure AD')
+
+        # Get workspaces (groups)
+        headers = {'Authorization': f'Bearer {access_token}'}
+        workspaces_url = 'https://api.powerbi.com/v1.0/myorg/groups'
+        workspaces_response = requests.get(workspaces_url, headers=headers)
+        workspaces_response.raise_for_status()
+        workspaces = workspaces_response.json().get('value', [])
+
+        # Get reports for each workspace
+        all_reports = []
+        for workspace in workspaces:
+            workspace_id = workspace['id']
+            workspace_name = workspace['name']
+
+            reports_url = f'https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/reports'
+            reports_response = requests.get(reports_url, headers=headers)
+
+            if reports_response.status_code == 200:
+                reports = reports_response.json().get('value', [])
+                for report in reports:
+                    all_reports.append({
+                        'report_id': report['id'],
+                        'report_name': report['name'],
+                        'workspace_id': workspace_id,
+                        'workspace_name': workspace_name,
+                        'web_url': report.get('webUrl', '')
+                    })
+
+        logger.info(f"Found {len(all_reports)} reports across {len(workspaces)} workspaces")
+
+        return jsonify({
+            'success': True,
+            'workspaces': workspaces,
+            'reports': all_reports
+        })
+
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"HTTP error listing Power BI reports: {str(e)}")
+        logger.error(f"Response: {e.response.text if hasattr(e, 'response') else 'No response'}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to list Power BI reports: {str(e)}'
+        }), 500
+    except Exception as e:
+        logger.error(f"Error listing Power BI reports: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/powerbi/token', methods=['POST'])
+def powerbi_token():
+    """
+    Get Power BI embed token for a report
+    """
+    try:
+        data = request.get_json()
+        report_id = data.get('report_id')
+        workspace_id = data.get('workspace_id')
+
+        if not report_id or not workspace_id:
+            return jsonify({
+                'success': False,
+                'error': 'Missing report_id or workspace_id'
+            }), 400
+
+        # Check if Power BI credentials are configured
+        if not all([POWERBI_CLIENT_ID, POWERBI_TENANT_ID, POWERBI_CLIENT_SECRET]):
+            return jsonify({
+                'success': False,
+                'error': 'Power BI credentials not configured. Please set POWERBI_CLIENT_ID, POWERBI_TENANT_ID, and POWERBI_CLIENT_SECRET environment variables.'
+            }), 500
+
+        # Get Azure AD access token
+        token_url = f'https://login.microsoftonline.com/{POWERBI_TENANT_ID}/oauth2/v2.0/token'
+        token_data = {
+            'grant_type': 'client_credentials',
+            'client_id': POWERBI_CLIENT_ID,
+            'client_secret': POWERBI_CLIENT_SECRET,
+            'scope': 'https://analysis.windows.net/powerbi/api/.default'
+        }
+
+        logger.info(f"Requesting Power BI token for report {report_id} in workspace {workspace_id}")
+
+        token_response = requests.post(token_url, data=token_data)
+        token_response.raise_for_status()
+        access_token = token_response.json().get('access_token')
+
+        if not access_token:
+            raise Exception('Failed to get access token from Azure AD')
+
+        logger.info(f"Successfully obtained Power BI access token")
+
+        return jsonify({
+            'success': True,
+            'access_token': access_token
+        })
+
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"HTTP error getting Power BI token: {str(e)}")
+        logger.error(f"Response: {e.response.text if hasattr(e, 'response') else 'No response'}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to authenticate with Power BI: {str(e)}'
+        }), 500
+    except Exception as e:
+        logger.error(f"Error getting Power BI token: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({
             'success': False,
             'error': str(e)

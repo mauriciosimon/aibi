@@ -1,0 +1,1 @@
+web: python3 powerbi_mcp_http_server.py

@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- ApexCharts for modern data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
+    <!-- Power BI JavaScript SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/powerbi-client@2.23.1/dist/powerbi.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -68,6 +70,7 @@
             color: white;
             padding: 20px 25px;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .chat-header h1 {
@@ -147,6 +150,7 @@
             padding: 20px;
             background: white;
             border-top: 1px solid #e9ecef;
+            flex-shrink: 0;
         }
 
         .chat-input-wrapper {
@@ -242,6 +246,7 @@
             gap: 10px;
             flex-wrap: wrap;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .quick-actions-label {
@@ -646,39 +651,42 @@
             text-align: center;
         }
 
-        /* Report Builder Styles */
+        /* Report Builder Styles - Redesigned for Professional BI Tool Look */
         .builder-container {
             display: flex;
             height: 100%;
             gap: 0;
+            background: #f5f7fa;
         }
 
+        /* Main Canvas - 70% width, chart as hero */
         .canvas-section {
-            flex: 2;
-            background: #f8f9fa;
+            flex: 7;
+            background: #f5f7fa;
             display: flex;
             flex-direction: column;
-            border-right: 1px solid #e0e0e0;
+            border-right: 1px solid #dfe3e8;
         }
 
         .canvas-header {
             background: white;
-            padding: 20px 25px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 24px 32px;
+            border-bottom: 1px solid #dfe3e8;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .canvas-header h2 {
-            font-size: 20px;
-            color: #333;
+            font-size: 22px;
+            color: #2d3748;
             margin: 0;
+            font-weight: 700;
         }
 
         .save-canvas-btn {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -686,16 +694,17 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
         }
 
         .save-canvas-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
         }
 
         .report-canvas {
             flex: 1;
-            padding: 20px;
+            padding: 32px;
             overflow-y: auto;
         }
 
@@ -705,102 +714,115 @@
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: #999;
+            color: #a0aec0;
             text-align: center;
         }
 
         .canvas-placeholder p {
-            margin: 10px 0 5px 0;
-            font-size: 16px;
+            margin: 16px 0 8px 0;
+            font-size: 18px;
+            font-weight: 500;
+            color: #718096;
         }
 
         .canvas-hint {
             font-size: 14px;
             opacity: 0.7;
+            color: #a0aec0;
         }
 
+        /* Right Sidebar - 30% width */
         .builder-chat-section {
-            flex: 1;
+            flex: 3;
             display: flex;
             flex-direction: column;
             background: white;
-            min-width: 400px;
+            min-width: 380px;
+            max-width: 480px;
         }
 
         .builder-chat-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px 25px;
-            text-align: center;
+            padding: 24px 24px;
         }
 
         .builder-chat-header h3 {
             font-size: 18px;
-            margin: 0 0 5px 0;
+            margin: 0 0 6px 0;
+            font-weight: 700;
         }
 
         .builder-chat-header p {
             margin: 0;
             font-size: 14px;
-            opacity: 0.95;
+            opacity: 0.9;
         }
 
+        /* Quick Visualizations - Moved to top, grid layout */
         .viz-selector {
-            padding: 15px 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 24px 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .viz-label {
-            margin: 0 0 10px 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: #666;
+            margin: 0 0 16px 0;
+            font-size: 12px;
+            font-weight: 700;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .viz-options {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
         }
 
         .viz-btn {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            background: white;
-            border: 1.5px solid #667eea;
-            color: #667eea;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 12px;
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            color: #4a5568;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .viz-btn:hover {
             background: #667eea;
+            border-color: #667eea;
             color: white;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
         }
 
         .viz-btn svg {
             flex-shrink: 0;
+            width: 24px;
+            height: 24px;
         }
 
         .builder-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 24px 20px;
             background: #fafbfc;
         }
 
         .builder-input-container {
             padding: 20px;
             background: white;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid #e2e8f0;
             display: flex;
             gap: 12px;
         }
@@ -808,11 +830,12 @@
         .builder-input-container input {
             flex: 1;
             padding: 14px 18px;
-            border: 2px solid #e9ecef;
+            border: 2px solid #e2e8f0;
             border-radius: 25px;
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
             transition: all 0.3s;
+            color: #2d3748;
         }
 
         .builder-input-container input:focus {
@@ -821,12 +844,12 @@
         }
 
         .builder-input-container button {
-            padding: 14px 32px;
+            padding: 14px 28px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             border-radius: 25px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -837,26 +860,46 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
+        /* Canvas Chart Card - Hero Layout */
         .canvas-viz-item {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
             animation: fadeIn 0.3s ease-in;
         }
 
         .canvas-viz-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
+            align-items: flex-start;
+            margin-bottom: 24px;
         }
 
+        /* Editable Chart Title */
         .canvas-viz-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+            border: 2px solid transparent;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: text;
+            transition: all 0.2s;
+            min-width: 200px;
+        }
+
+        .canvas-viz-title:hover {
+            background: #f7fafc;
+            border-color: #e2e8f0;
+        }
+
+        .canvas-viz-title:focus {
+            outline: none;
+            background: #f7fafc;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .canvas-viz-actions {
@@ -865,21 +908,92 @@
         }
 
         .canvas-viz-btn {
-            padding: 6px 12px;
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 12px;
+            padding: 8px 16px;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
+            color: #4a5568;
         }
 
         .canvas-viz-btn:hover {
-            background: #e9ecef;
+            background: #e2e8f0;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .canvas-viz-btn.remove {
-            color: #dc3545;
+            color: #e53e3e;
+        }
+
+        .canvas-viz-btn.remove:hover {
+            background: #fff5f5;
+            border-color: #feb2b2;
+        }
+
+        /* Chart Container - Make charts 3x larger */
+        .canvas-viz-item canvas {
+            min-height: 500px !important;
+            max-height: 600px !important;
+        }
+
+        .canvas-viz-item .chart-container {
+            min-height: 500px;
+            max-height: 600px;
+            margin: 24px 0;
+        }
+
+        /* Key Insights Section */
+        .canvas-insights {
+            margin-top: 32px;
+            padding: 24px;
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+        }
+
+        .canvas-insights h4 {
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .canvas-insights ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style: none;
+        }
+
+        .canvas-insights li {
+            margin-bottom: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #4a5568;
+            position: relative;
+        }
+
+        .canvas-insights li::before {
+            content: "•";
+            color: #667eea;
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+            position: absolute;
+            left: 0;
+        }
+
+        /* Hide text explanations - will be handled in JavaScript */
+        .canvas-viz-item .message-content {
+            display: none;
+        }
+
+        .canvas-viz-item.show-insights .message-content {
+            display: block;
         }
     </style>
 </head>
@@ -1002,6 +1116,10 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
                                 Table
                             </button>
+                            <button class="viz-btn" onclick="showPowerBIDialog()" style="background: linear-gradient(135deg, #F2C811 0%, #F29111 100%); color: #000;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 2h10v20H2V2zm12 0h8v12h-8V2zm0 14h8v6h-8v-6z"/></svg>
+                                Power BI
+                            </button>
                         </div>
                     </div>
 
@@ -1079,6 +1197,48 @@
         </div>
     </div>
 
+    <!-- Power BI Dialog Modal -->
+    <div id="powerBIDialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <h2 style="margin: 0 0 20px 0; color: #333; display: flex; align-items: center; gap: 10px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 2h10v20H2V2zm12 0h8v12h-8V2zm0 14h8v6h-8v-6z"/>
+                </svg>
+                Embed Power BI Report
+            </h2>
+            <p style="margin: 0 0 20px 0; color: #666; font-size: 14px;">
+                Select a Power BI report or dashboard from your workspace to embed it in the canvas.
+            </p>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 6px; color: #555; font-weight: 500; font-size: 14px;">Select Report</label>
+                <select id="powerBIReportSelect"
+                    style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box; background: white;">
+                    <option value="">Loading reports...</option>
+                </select>
+                <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">Choose from your available Power BI reports and dashboards</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 6px; color: #555; font-weight: 500; font-size: 14px;">Display Name (Optional)</label>
+                <input type="text" id="powerBIDisplayName" placeholder="Leave empty to use report name"
+                    style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+                <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">Customize the display name or leave empty to use the report's name</p>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closePowerBIDialog()"
+                    style="padding: 10px 20px; border: 2px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;">
+                    Cancel
+                </button>
+                <button onclick="embedPowerBIReport()"
+                    style="padding: 10px 20px; border: none; background: linear-gradient(135deg, #F2C811 0%, #F29111 100%); color: #000; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                    Embed Report
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Configuration - Automatically uses same server
         const BACKEND_URL = window.location.origin;  // Uses current domain
@@ -1122,28 +1282,79 @@
                 chartInstances[containerId].destroy();
             }
 
-            // Create new chart
+            // Create new chart with improved styling
             const ctx = canvas.getContext('2d');
             chartInstances[containerId] = new Chart(ctx, {
                 type: chartData.type || 'bar',
                 data: chartData.data,
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,  // Allow flexible height
                     plugins: {
                         legend: {
                             display: chartData.showLegend !== false,
                             position: 'top',
+                            labels: {
+                                padding: 16,
+                                font: {
+                                    size: 13,
+                                    weight: '600'
+                                }
+                            }
                         },
                         tooltip: {
-                            enabled: true
+                            enabled: true,
+                            backgroundColor: 'rgba(45, 55, 72, 0.95)',
+                            padding: 12,
+                            cornerRadius: 8,
+                            titleFont: {
+                                size: 14,
+                                weight: '700'
+                            },
+                            bodyFont: {
+                                size: 13
+                            }
                         }
                     },
                     scales: chartData.type !== 'pie' && chartData.type !== 'doughnut' ? {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 0,  // Keep labels horizontal
+                                minRotation: 0,
+                                font: {
+                                    size: 12
+                                },
+                                callback: function(value, index, ticks) {
+                                    // Truncate long labels
+                                    const label = this.getLabelForValue(value);
+                                    return label.length > 20 ? label.substring(0, 20) + '...' : label;
+                                }
+                            }
+                        },
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(226, 232, 240, 0.5)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
                         }
-                    } : {}
+                    } : {},
+                    // Increase bar spacing
+                    categoryPercentage: 0.8,
+                    barPercentage: 0.7,
+                    layout: {
+                        padding: {
+                            top: 10,
+                            bottom: 10
+                        }
+                    }
                 }
             });
         }
@@ -1153,17 +1364,62 @@
          * Looks for special chart syntax: [CHART:chartId]{...json...}
          */
         function processChartEmbeds(content) {
-            const chartPattern = /\[CHART:(\w+)\]\s*(\{[\s\S]*?\})/g;
+            // Match [CHART:id] and then extract complete JSON by counting braces
+            const chartStartPattern = /\[CHART:(\w+)\]\s*\{/g;
             let match;
             const charts = [];
 
-            while ((match = chartPattern.exec(content)) !== null) {
+            while ((match = chartStartPattern.exec(content)) !== null) {
                 const chartId = match[1];
-                try {
-                    const chartData = JSON.parse(match[2]);
-                    charts.push({ id: chartId, data: chartData, fullMatch: match[0] });
-                } catch (e) {
-                    console.error('Failed to parse chart data:', e);
+                const jsonStart = match.index + match[0].length - 1; // Position of opening {
+
+                // Find matching closing brace by counting nesting level
+                let braceCount = 0;
+                let jsonEnd = -1;
+                let inString = false;
+                let escapeNext = false;
+
+                for (let i = jsonStart; i < content.length; i++) {
+                    const char = content[i];
+
+                    if (escapeNext) {
+                        escapeNext = false;
+                        continue;
+                    }
+
+                    if (char === '\\') {
+                        escapeNext = true;
+                        continue;
+                    }
+
+                    if (char === '"') {
+                        inString = !inString;
+                        continue;
+                    }
+
+                    if (!inString) {
+                        if (char === '{') braceCount++;
+                        if (char === '}') {
+                            braceCount--;
+                            if (braceCount === 0) {
+                                jsonEnd = i + 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (jsonEnd > jsonStart) {
+                    const jsonStr = content.substring(jsonStart, jsonEnd);
+                    try {
+                        const chartData = JSON.parse(jsonStr);
+                        const fullMatch = content.substring(match.index, jsonEnd);
+                        charts.push({ id: chartId, data: chartData, fullMatch });
+                        console.log('✅ Successfully parsed chart:', chartId, chartData);
+                    } catch (e) {
+                        console.error('❌ Failed to parse chart JSON:', e);
+                        console.error('JSON string was:', jsonStr);
+                    }
                 }
             }
 
@@ -1573,7 +1829,72 @@
             messageDiv.className = `message ${type}`;
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
-            contentDiv.innerHTML = formatMessage(content);
+
+            // Remove [CHART:...] syntax from sidebar messages - charts only appear on canvas
+            let cleanContent = content;
+            let hasChart = false;
+
+            // Remove [CHART:id]{...json...} using the same brace-counting logic
+            const chartStartPattern = /\[CHART:(\w+)\]\s*\{/g;
+            let match;
+            const chartsToRemove = [];
+
+            while ((match = chartStartPattern.exec(cleanContent)) !== null) {
+                hasChart = true;
+                const jsonStart = match.index + match[0].length - 1;
+                let braceCount = 0;
+                let jsonEnd = -1;
+                let inString = false;
+                let escapeNext = false;
+
+                for (let i = jsonStart; i < cleanContent.length; i++) {
+                    const char = cleanContent[i];
+                    if (escapeNext) {
+                        escapeNext = false;
+                        continue;
+                    }
+                    if (char === '\\') {
+                        escapeNext = true;
+                        continue;
+                    }
+                    if (char === '"') {
+                        inString = !inString;
+                        continue;
+                    }
+                    if (!inString) {
+                        if (char === '{') braceCount++;
+                        if (char === '}') {
+                            braceCount--;
+                            if (braceCount === 0) {
+                                jsonEnd = i + 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (jsonEnd > jsonStart) {
+                    chartsToRemove.push({
+                        start: match.index,
+                        end: jsonEnd
+                    });
+                }
+            }
+
+            // Remove charts from end to start to preserve indices
+            chartsToRemove.reverse().forEach(chart => {
+                cleanContent = cleanContent.substring(0, chart.start) + cleanContent.substring(chart.end);
+            });
+
+            // Also remove ```chart``` code blocks
+            cleanContent = cleanContent.replace(/```chart[\s\S]*?```/g, '');
+
+            // Add a simple message if chart was detected
+            if (hasChart || cleanContent !== content) {
+                cleanContent = '✅ Visualization added to canvas!\n\n' + cleanContent.trim();
+            }
+
+            contentDiv.innerHTML = formatMessage(cleanContent);
             messageDiv.appendChild(contentDiv);
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -1611,14 +1932,23 @@
             // Process content for chart embeds (same as Home page does)
             const { content: processedContent, charts } = processChartEmbeds(content);
 
+            // Extract key insights from content (first 2-3 bullet points or sentences)
+            const insights = extractKeyInsights(processedContent);
+
             vizDiv.innerHTML = `
                 <div class="canvas-viz-header">
-                    <div class="canvas-viz-title">${title}</div>
+                    <div class="canvas-viz-title" contenteditable="true" spellcheck="false">${title}</div>
                     <div class="canvas-viz-actions">
                         <button class="canvas-viz-btn remove" onclick="removeVisualization('${vizId}')">🗑️ Remove</button>
                     </div>
                 </div>
-                <div class="canvas-viz-content">${processedContent}</div>
+                <div class="canvas-viz-content" style="display: none;">${processedContent}</div>
+                ${insights ? `
+                <div class="canvas-insights">
+                    <h4>📊 Key Insights</h4>
+                    ${insights}
+                </div>
+                ` : ''}
             `;
             canvas.appendChild(vizDiv);
 
@@ -1628,6 +1958,36 @@
                     renderChart(chart.data, `chart-container-${chart.id}`);
                 });
             }, 100);
+        }
+
+        // Extract 2-3 key insights from content
+        function extractKeyInsights(content) {
+            // Remove HTML tags for analysis
+            const text = content.replace(/<[^>]*>/g, ' ').trim();
+
+            // Try to extract bullet points first
+            const bulletPoints = text.match(/[•\-\*]\s*([^\n•\-\*]+)/g);
+            if (bulletPoints && bulletPoints.length > 0) {
+                const topPoints = bulletPoints.slice(0, 3).map(p =>
+                    p.replace(/^[•\-\*]\s*/, '').trim()
+                );
+                return '<ul>' + topPoints.map(p => `<li>${p}</li>`).join('') + '</ul>';
+            }
+
+            // Otherwise, extract first 2-3 sentences
+            const sentences = text.match(/[^.!?]+[.!?]+/g);
+            if (sentences && sentences.length > 0) {
+                const topSentences = sentences.slice(0, 3).map(s => s.trim());
+                return '<ul>' + topSentences.map(s => `<li>${s}</li>`).join('') + '</ul>';
+            }
+
+            // If no structure found, take first 200 chars
+            if (text.length > 50) {
+                const summary = text.substring(0, 200).trim() + (text.length > 200 ? '...' : '');
+                return `<ul><li>${summary}</li></ul>`;
+            }
+
+            return null; // No insights to display
         }
 
         function removeVisualization(vizId) {
@@ -1942,6 +2302,202 @@
         function removeReportTyping() {
             const typing = document.getElementById('reportTypingIndicator');
             if (typing) typing.remove();
+        }
+
+        // ===== Power BI Integration Functions =====
+
+        let powerBIEmbedCounter = 0;
+
+        async function showPowerBIDialog() {
+            const dialog = document.getElementById('powerBIDialog');
+            dialog.style.display = 'flex';
+
+            // Fetch available reports from backend
+            const select = document.getElementById('powerBIReportSelect');
+            select.innerHTML = '<option value="">Loading reports...</option>';
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/powerbi/list`);
+                const data = await response.json();
+
+                if (data.success && data.reports && data.reports.length > 0) {
+                    // Populate dropdown with reports
+                    select.innerHTML = '<option value="">-- Select a report --</option>';
+                    data.reports.forEach(report => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify({
+                            report_id: report.report_id,
+                            workspace_id: report.workspace_id,
+                            report_name: report.report_name
+                        });
+                        option.textContent = `${report.workspace_name} / ${report.report_name}`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    select.innerHTML = '<option value="">No reports available</option>';
+                    if (!data.success) {
+                        console.error('Failed to load reports:', data.error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching Power BI reports:', error);
+                select.innerHTML = '<option value="">Error loading reports</option>';
+            }
+        }
+
+        function closePowerBIDialog() {
+            const dialog = document.getElementById('powerBIDialog');
+            dialog.style.display = 'none';
+            // Clear inputs
+            document.getElementById('powerBIReportSelect').selectedIndex = 0;
+            document.getElementById('powerBIDisplayName').value = '';
+        }
+
+        async function embedPowerBIReport() {
+            const select = document.getElementById('powerBIReportSelect');
+            const selectedValue = select.value;
+
+            if (!selectedValue) {
+                alert('Please select a report');
+                return;
+            }
+
+            // Parse the selected report data
+            let reportData;
+            try {
+                reportData = JSON.parse(selectedValue);
+            } catch (e) {
+                alert('Invalid report selection');
+                return;
+            }
+
+            const reportId = reportData.report_id;
+            const workspaceId = reportData.workspace_id;
+            let displayName = document.getElementById('powerBIDisplayName').value.trim();
+
+            // Use report name as default display name if not provided
+            if (!displayName) {
+                displayName = reportData.report_name;
+            }
+
+            closePowerBIDialog();
+
+            // Show loading message
+            addBuilderMessage('Embedding Power BI report: ' + displayName + '...', 'system');
+
+            try {
+                // Get access token from backend
+                const response = await fetch(`${BACKEND_URL}/powerbi/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        report_id: reportId,
+                        workspace_id: workspaceId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to get Power BI access token');
+                }
+
+                // Create Power BI embed container in canvas
+                const canvas = document.getElementById('reportCanvas');
+                const placeholder = canvas.querySelector('.canvas-placeholder');
+                if (placeholder) placeholder.remove();
+
+                powerBIEmbedCounter++;
+                const embedId = 'powerbi_embed_' + powerBIEmbedCounter;
+                const vizDiv = document.createElement('div');
+                vizDiv.className = 'canvas-viz-item';
+                vizDiv.id = embedId;
+
+                vizDiv.innerHTML = `
+                    <div class="canvas-viz-header">
+                        <div class="canvas-viz-title" contenteditable="true" spellcheck="false">${displayName}</div>
+                        <div class="canvas-viz-actions">
+                            <button class="canvas-viz-btn remove" onclick="removePowerBIEmbed('${embedId}')">🗑️ Remove</button>
+                        </div>
+                    </div>
+                    <div id="${embedId}_container" style="height: 600px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;"></div>
+                `;
+                canvas.appendChild(vizDiv);
+
+                // Embed Power BI report using Power BI JavaScript SDK
+                const containerId = `${embedId}_container`;
+                const embedContainer = document.getElementById(containerId);
+
+                const embedConfig = {
+                    type: 'report',
+                    tokenType: window.models.TokenType.Embed,
+                    accessToken: data.access_token,
+                    embedUrl: `https://app.powerbi.com/reportEmbed?reportId=${reportId}&groupId=${workspaceId}`,
+                    id: reportId,
+                    settings: {
+                        panes: {
+                            filters: {
+                                expanded: false,
+                                visible: true
+                            }
+                        },
+                        background: window.models.BackgroundType.Transparent
+                    }
+                };
+
+                const report = powerbi.embed(embedContainer, embedConfig);
+
+                // Handle embed events
+                report.on('loaded', function() {
+                    console.log('Power BI Report loaded');
+                });
+
+                report.on('rendered', function() {
+                    console.log('Power BI Report rendered');
+                    addBuilderMessage('✅ Power BI report "' + displayName + '" embedded successfully!', 'system');
+                });
+
+                report.on('error', function(event) {
+                    console.error('Power BI embed error:', event.detail);
+                    addBuilderMessage('❌ Error embedding Power BI report: ' + event.detail, 'system');
+                });
+
+            } catch (error) {
+                console.error('Power BI embedding error:', error);
+                addBuilderMessage('❌ Failed to embed Power BI report: ' + error.message, 'system');
+            }
+        }
+
+        function removePowerBIEmbed(embedId) {
+            const element = document.getElementById(embedId);
+            if (element) {
+                // Try to remove Power BI embed instance
+                const containerId = `${embedId}_container`;
+                const container = document.getElementById(containerId);
+                if (container) {
+                    powerbi.reset(container);
+                }
+                element.remove();
+            }
+
+            // Show placeholder if no more visualizations
+            const canvas = document.getElementById('reportCanvas');
+            if (canvas.querySelectorAll('.canvas-viz-item').length === 0) {
+                canvas.innerHTML = `
+                    <div class="canvas-placeholder">
+                        <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3">
+                            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                        </svg>
+                        <p>Your visualizations will appear here</p>
+                        <p class="canvas-hint">Use the chat to request data and visualizations</p>
+                    </div>
+                `;
+            }
         }
     </script>
 </body>
