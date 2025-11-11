@@ -80,6 +80,9 @@ def save_dynamic_tool_to_file(tool_name, tool_definition, function_code):
 
     file_path = os.path.join(tools_dir, f"{tool_name}.py")
 
+    # Convert tool definition to a properly formatted string
+    tool_def_str = json.dumps(tool_definition, indent=4)
+
     content = f'''"""
 Dynamically Generated Tool: {tool_name}
 Generated: {datetime.now().isoformat()}
@@ -89,7 +92,7 @@ import json
 from datetime import datetime, timedelta
 
 # Tool Definition
-TOOL_DEFINITION = {json.dumps(tool_definition, indent=4)}
+TOOL_DEFINITION = {tool_def_str}
 
 # Tool Implementation
 {function_code}
