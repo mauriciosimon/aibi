@@ -508,7 +508,9 @@ def process_tool_calls(tool_calls):
 @app.route('/')
 def index():
     """Serve the chat interface"""
-    return send_from_directory('.', 'intelligent_chat_interface.html')
+    # Use the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    return send_from_directory(script_dir, 'intelligent_chat_interface.html')
 
 
 @app.route('/health', methods=['GET'])
