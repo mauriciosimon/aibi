@@ -1076,6 +1076,9 @@ def powerbi_token():
 
 
 if __name__ == '__main__':
+    # Get port from environment variable (Railway provides this) or default to 5001
+    port = int(os.getenv('PORT', 5001))
+
     logger.info("=" * 60)
     logger.info("Intelligent Chat Backend - Claude + Odoo MCP")
     logger.info("=" * 60)
@@ -1083,7 +1086,7 @@ if __name__ == '__main__':
     logger.info(f"MCP API Key: {'Set' if MCP_API_KEY != 'odoo-mcp-2025' else 'NOT SET'}")
     logger.info(f"Claude API Key: {'Set' if CLAUDE_API_KEY != 'your-claude-api-key-here' else 'NOT SET'}")
     logger.info(f"Claude API Key (first 20 chars): {CLAUDE_API_KEY[:20]}...")
-    logger.info("\nStarting server on http://localhost:5001")
+    logger.info(f"\nStarting server on http://0.0.0.0:{port}")
     logger.info("=" * 60)
 
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True)
