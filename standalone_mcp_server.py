@@ -1167,14 +1167,17 @@ def get_business_kpis(odoo, args):
 
 
 if __name__ == '__main__':
+    # Get port from environment variable (Railway provides this) or default to 5000
+    port = int(os.getenv('PORT', 5000))
+
     print("=" * 60)
     print("Claro Distribution MCP Server - Standalone Version")
     print("=" * 60)
     print(f"\nOdoo Host: {ODOO_HOST}")
     print(f"Odoo Database: {ODOO_DATABASE}")
-    print(f"\nStarting server...")
-    print(f"\nHealth check: http://localhost:5000/mcp/health")
+    print(f"\nStarting server on port {port}...")
+    print(f"\nHealth check: http://localhost:{port}/mcp/health")
     print("=" * 60)
 
     # Run Flask app
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=False)
