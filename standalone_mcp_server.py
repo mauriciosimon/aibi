@@ -232,7 +232,7 @@ def list_tools():
             {
                 'name': 'get_sales_summary',
                 'description': 'Get sales summary by product/service',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'start_date': {'type': 'string', 'description': 'Start date (YYYY-MM-DD)'},
@@ -243,7 +243,7 @@ def list_tools():
             {
                 'name': 'get_revenue_by_period',
                 'description': 'Get revenue breakdown by time period',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'period': {'type': 'string', 'description': 'Period: month, quarter, year'},
@@ -254,7 +254,7 @@ def list_tools():
             {
                 'name': 'get_top_customers',
                 'description': 'Get top customers by revenue',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'limit': {'type': 'integer', 'description': 'Number of customers (default: 10)'}
@@ -264,7 +264,7 @@ def list_tools():
             {
                 'name': 'get_expense_analysis',
                 'description': 'Analyze company expenses',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'start_date': {'type': 'string'},
@@ -276,7 +276,7 @@ def list_tools():
             {
                 'name': 'get_employee_metrics',
                 'description': 'Get employee headcount, department distribution, and workforce analytics',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'group_by': {'type': 'string', 'description': 'Group by: department, job, contract_type'}
@@ -286,7 +286,7 @@ def list_tools():
             {
                 'name': 'get_attendance_analysis',
                 'description': 'Analyze employee attendance patterns and work hours',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'start_date': {'type': 'string'},
@@ -298,7 +298,7 @@ def list_tools():
             {
                 'name': 'get_timesheet_summary',
                 'description': 'Get timesheet data by project, employee, or task',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'start_date': {'type': 'string'},
@@ -310,7 +310,7 @@ def list_tools():
             {
                 'name': 'get_recruitment_pipeline',
                 'description': 'Get recruitment metrics: open positions, applicants, hiring funnel',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'start_date': {'type': 'string'},
@@ -322,7 +322,7 @@ def list_tools():
             {
                 'name': 'get_crm_pipeline',
                 'description': 'Get CRM pipeline: leads, opportunities, conversion rates by stage',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'start_date': {'type': 'string'},
@@ -333,7 +333,7 @@ def list_tools():
             {
                 'name': 'get_sales_team_performance',
                 'description': 'Analyze sales team performance: quotas, achievements, win rates',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'start_date': {'type': 'string'},
@@ -346,7 +346,7 @@ def list_tools():
             {
                 'name': 'get_inventory_status',
                 'description': 'Get inventory levels, stock movements, and warehouse analytics',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'warehouse_id': {'type': 'integer', 'description': 'Optional: specific warehouse'},
@@ -357,7 +357,7 @@ def list_tools():
             {
                 'name': 'get_purchase_analysis',
                 'description': 'Analyze purchase orders: spending by vendor, delivery performance',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'start_date': {'type': 'string'},
@@ -369,7 +369,7 @@ def list_tools():
             {
                 'name': 'get_project_status',
                 'description': 'Get project status: progress, task completion, resource allocation',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'project_id': {'type': 'integer', 'description': 'Optional: specific project'},
@@ -381,7 +381,7 @@ def list_tools():
             {
                 'name': 'get_business_kpis',
                 'description': 'Get comprehensive business KPIs: revenue, profit margins, employee productivity, customer satisfaction',
-                'inputSchema': {
+                'input_schema': {
                     'type': 'object',
                     'properties': {
                         'period': {'type': 'string', 'description': 'month, quarter, year'},
