@@ -1,1 +1,1 @@
-web: ./start.sh
+web: python3 intelligent_chat_server.py
